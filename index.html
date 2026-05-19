@@ -322,14 +322,26 @@ window.addEventListener('DOMContentLoaded', function () {
     .then(function (r) { return r.json(); })
     .then(function (cfg) {
       paypalClientId = cfg.paypal_client_id;
-      if (cfg.is_local) return;
-      var s = document.createElement('script');
-      s.src = 'https://www.paypal.com/sdk/js?client-id=' + cfg.paypal_client_id + '&currency=USD';
-      s.async = true;
-      s.onload = function () { paypalLoaded = true; paypalCallbacks.forEach(function (c) { c(); }); paypalCallbacks = []; };
-      document.head.appendChild(s);
+      if (!cfg.is_local) {
+        var s = document.createElement('script');
+        s.src = 'https://www.paypal.com/sdk/js?client-id=' + cfg.paypal_client_id + '&currency=USD&intent=capture';
+        s.async = true;
+        s.onload = function () { startPayPalPolling(); };
+        document.head.appendChild(s);
+      }
     });
 });
+
+function startPayPalPolling() {
+  var iv = setInterval(function () {
+    if (typeof paypal_sdk !== 'undefined' && paypal_sdk.Buttons) {
+      paypalLoaded = true;
+      clearInterval(iv);
+      paypalCallbacks.forEach(function (c) { c(); });
+      paypalCallbacks = [];
+    }
+  }, 200);
+}
 
 // RENDER PRODUCTS
 function renderProducts() {
@@ -405,7 +417,12 @@ function renderPayPalButton() {
     paypalButtonsRendered = true;
     return;
   }
-  if (!paypalLoaded || typeof paypal_sdk === 'undefined') {
+  if (!paypalLoaded) {
+    container.innerHTML = '<p style="color:var(--muted2);font-size:13px;text-align:center">Loading PayPal...</p>';
+    paypalCallbacks.push(function () { renderPayPalButton(); });
+    return;
+  }
+  if (typeof paypal_sdk === 'undefined' || !paypal_sdk.Buttons) {
     container.innerHTML = '<p style="color:var(--muted2);font-size:13px;text-align:center">Loading PayPal...</p>';
     paypalCallbacks.push(function () { renderPayPalButton(); });
     return;
