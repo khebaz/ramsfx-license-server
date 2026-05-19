@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rams FX Bots — Professional Series</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#C9A84C;--gold2:#E8C96A;--gold3:#F5E0A0;
+  --dark:#080A0D;--dark2:#0F1217;--dark3:#161B22;--dark4:#1C2330;
+  --text:#E8EBF0;--muted:#6E7A8A;--muted2:#9AABB8;
+  --border:rgba(201,168,76,0.15);--border2:rgba(201,168,76,0.3);
+  --success:#1A9E6E;--danger:#C0392B;--info:#1A6BAE;
+  --font:'DM Sans',sans-serif;--mono:'DM Mono',monospace;--display:'Syne',sans-serif
+}
+body{font-family:var(--font);background:var(--dark);color:var(--text);font-size:14px;line-height:1.6;min-height:100vh}
+input,select,textarea{font-family:var(--font);font-size:13px;background:var(--dark3);border:0.5px solid var(--border2);color:var(--text);border-radius:8px;padding:10px 14px;width:100%;outline:none;transition:border-color .2s}
+input:focus,select:focus,textarea:focus{border-color:var(--gold)}
+input::placeholder{color:var(--muted)}
+select option{background:var(--dark3)}
+.btn{font-family:var(--font);cursor:pointer;border:none;border-radius:8px;font-size:13px;font-weight:500;padding:10px 20px;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.btn-gold{background:var(--gold);color:#000}
+.btn-gold:hover{background:var(--gold2);transform:translateY(-1px)}
+.btn-outline{background:transparent;border:0.5px solid var(--border2);color:var(--text)}
+.btn-outline:hover{border-color:var(--gold);color:var(--gold)}
+.btn-sm{padding:6px 14px;font-size:12px}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;padding:3px 10px;border-radius:20px;white-space:nowrap}
+.badge-gold{background:rgba(201,168,76,.12);color:var(--gold);border:0.5px solid var(--border)}
+.badge-success{background:rgba(26,158,110,.12);color:#2ecc9a;border:0.5px solid rgba(26,158,110,.3)}
+.badge-info{background:rgba(26,107,174,.12);color:#5dade2;border:0.5px solid rgba(26,107,174,.3)}
+.card{background:var(--dark3);border:0.5px solid var(--border);border-radius:12px;padding:20px}
+.tag{font-family:var(--mono);font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);padding-bottom:4px}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:0.5px solid var(--border);background:var(--dark2);position:sticky;top:0;z-index:100}
+.logo{font-family:var(--display);font-weight:800;font-size:18px;letter-spacing:-.5px;cursor:pointer}
+.logo em{color:var(--gold);font-style:normal}
+.nav-tabs{display:flex;gap:4px;background:var(--dark3);border:0.5px solid var(--border);border-radius:10px;padding:4px}
+.nav-tab{padding:7px 16px;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer;color:var(--muted2);transition:all .2s;border:none;background:none;font-family:var(--font)}
+.nav-tab.active{background:var(--gold);color:#000}
+.nav-tab:hover:not(.active){color:var(--text)}
+.page{display:none}
+.page.active{display:block}
+.hero{text-align:center;padding:56px 24px 40px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(201,168,76,.06) 0%,transparent 70%);pointer-events:none}
+.hero-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:16px}
+.hero h1{font-family:var(--display);font-size:38px;font-weight:800;line-height:1.05;letter-spacing:-1.5px;margin-bottom:14px}
+.hero h1 em{color:var(--gold);font-style:normal}
+.hero p{font-size:14px;color:var(--muted2);max-width:400px;margin:0 auto 32px;line-height:1.7}
+.hero-stats{display:flex;gap:0;justify-content:center;border:0.5px solid var(--border);border-radius:12px;overflow:hidden;width:fit-content;margin:0 auto}
+.h-stat{padding:14px 28px;text-align:center;border-right:0.5px solid var(--border)}
+.h-stat:last-child{border-right:none}
+.h-stat-n{font-family:var(--display);font-size:20px;font-weight:700;color:var(--gold)}
+.h-stat-l{font-size:10px;color:var(--muted);margin-top:1px;font-family:var(--mono);letter-spacing:.5px}
+.product-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-top:28px}
+.product-card{background:var(--dark2);border:0.5px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;transition:border-color .25s,transform .2s,box-shadow .2s}
+.product-card:hover{border-color:var(--border2);transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,0,0,.4)}
+.product-card.featured{border-color:var(--gold);box-shadow:0 0 30px rgba(201,168,76,.08)}
+.pc-header{padding:20px 20px 16px;border-bottom:0.5px solid rgba(255,255,255,.05)}
+.pc-name{font-family:var(--display);font-size:17px;font-weight:700;margin-bottom:6px;line-height:1.2}
+.pc-desc{font-size:12px;color:var(--muted2);line-height:1.6}
+.pc-body{padding:14px 20px}
+.pc-feat{list-style:none}
+.pc-feat li{font-size:12px;color:var(--muted2);padding:3px 0;display:flex;align-items:center;gap:8px}
+.pc-feat li::before{content:'';width:3px;height:3px;border-radius:50%;background:var(--gold);flex-shrink:0}
+.pc-footer{padding:14px 20px;display:flex;align-items:center;justify-content:space-between;border-top:0.5px solid rgba(255,255,255,.05)}
+.pc-price{font-family:var(--display);font-size:22px;font-weight:700}
+.pc-period{font-size:10px;color:var(--muted);font-weight:400;font-family:var(--font)}
+.checkout-wrap{max-width:560px;margin:0 auto}
+.steps{display:flex;gap:0;margin-bottom:32px;border:0.5px solid var(--border);border-radius:10px;overflow:hidden}
+.step{flex:1;padding:12px;text-align:center;font-size:12px;color:var(--muted);border-right:0.5px solid var(--border)}
+.step:last-child{border-right:none}
+.step.active{background:rgba(201,168,76,.08);color:var(--gold)}
+.step.done{background:rgba(26,158,110,.06);color:#2ecc9a}
+.step-num{font-family:var(--mono);font-size:10px;letter-spacing:1px;display:block;margin-bottom:2px}
+.step-label{font-size:11px;font-weight:500}
+.form-group{margin-bottom:18px}
+.form-label{display:block;font-size:12px;color:var(--muted2);margin-bottom:6px;font-weight:500}
+.form-hint{font-size:11px;color:var(--muted);margin-top:4px}
+.order-summary{background:var(--dark4);border:0.5px solid var(--border);border-radius:10px;padding:16px;margin-bottom:20px}
+.os-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:13px}
+.os-row.total{border-top:0.5px solid var(--border);margin-top:8px;padding-top:12px;font-weight:500;font-size:15px}
+.os-label{color:var(--muted2)}
+.os-val{color:var(--text)}
+.os-val.gold{color:var(--gold);font-family:var(--display);font-weight:700}
+.confirm-box{background:var(--dark4);border:0.5px solid rgba(26,158,110,.3);border-radius:12px;padding:20px;text-align:center}
+.confirm-icon{width:52px;height:52px;border-radius:50%;background:rgba(26,158,110,.12);border:0.5px solid rgba(26,158,110,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:24px}
+.confirm-title{font-family:var(--display);font-size:18px;font-weight:700;margin-bottom:6px}
+.confirm-sub{font-size:12px;color:var(--muted2);line-height:1.6;margin-bottom:16px}
+.license-key{background:var(--dark3);border:0.5px solid var(--border);border-radius:8px;padding:10px 14px;font-family:var(--mono);font-size:12px;color:var(--gold);letter-spacing:1px;text-align:center;margin:12px 0;cursor:pointer;transition:border-color .2s}
+.license-key:hover{border-color:var(--gold)}
+.download-btn-big{width:100%;padding:14px;font-size:14px;font-weight:600;border-radius:10px;font-family:var(--display);justify-content:center}
+.acct-assigned{background:var(--dark3);border:0.5px solid var(--border);border-radius:8px;padding:8px 14px;margin:6px 0;display:flex;align-items:center;justify-content:space-between}
+.acct-assigned-num{font-family:var(--mono);font-size:12px;color:var(--text)}
+.acct-assigned-badge{font-family:var(--mono);font-size:10px;color:var(--success);background:rgba(26,158,110,.1);border:0.5px solid rgba(26,158,110,.25);padding:2px 8px;border-radius:4px}
+.trust-bar{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:16px;background:var(--dark2);border:0.5px solid var(--border);border-radius:10px;margin-top:24px}
+.trust-item{display:flex;align-items:center;gap:8px}
+.trust-item i{color:var(--gold);font-size:18px}
+.trust-title{font-size:12px;font-weight:500}
+.trust-sub{font-size:11px;color:var(--muted)}
+#paypal-button-container{min-height:45px;margin-top:12px}
+.notification{background:var(--dark3);border:0.5px solid rgba(26,158,110,.3);border-radius:8px;padding:12px 16px;display:flex;align-items:flex-start;gap:10px;margin-bottom:10px}
+.notification.warn{border-color:rgba(201,168,76,.3)}
+.notif-icon{font-size:16px;margin-top:1px;flex-shrink:0;color:var(--gold)}
+.notif-text{font-size:12px;color:var(--muted2);line-height:1.5}
+.notif-text strong{color:var(--text)}
+.prog-wrap{width:100%;background:var(--dark4);border:0.5px solid var(--border);border-radius:4px;height:4px;overflow:hidden;margin-top:4px}
+.prog-fill{height:100%;background:var(--gold);border-radius:4px;transition:width .4s}
+.status-dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
+.status-dot.green{background:#2ecc9a;box-shadow:0 0 6px rgba(46,204,154,.5)}
+#toast-container{position:fixed;bottom:24px;right:24px;z-index:10000;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--dark3);border:0.5px solid var(--border2);border-radius:10px;padding:12px 18px;font-size:13px;display:flex;align-items:center;gap:10px;animation:toastIn .3s forwards;max-width:320px;box-shadow:0 8px 32px rgba(0,0,0,.5)}
+.toast.success{border-color:rgba(26,158,110,.4)}
+.toast.danger{border-color:rgba(192,57,43,.4)}
+.toast.gold{border-color:var(--border2)}
+.toast i{font-size:16px;flex-shrink:0}
+.toast.success i{color:#2ecc9a}
+.toast.danger i{color:#e74c3c}
+.toast.gold i{color:var(--gold)}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+@keyframes toastOut{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(20px)}}
+@media(max-width:700px){
+  .hero h1{font-size:26px}
+  .h-stat{padding:10px 16px}
+  .product-grid{grid-template-columns:1fr}
+}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(201,168,76,.2);border-radius:4px}
+</style>
+</head>
+<body>
+
+<div id="toast-container"></div>
+
+<!-- NAV -->
+<div class="nav">
+  <div class="logo" onclick="showPage('store')">Rams <em>FX</em> Bots</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('store')">Store</button>
+    <button class="nav-tab" onclick="showPage('checkout')">Checkout</button>
+  </div>
+  <div class="nav-right">
+    <div class="status-dot green"></div>
+    <span style="font-size:11px;color:var(--muted)">Live · Secure</span>
+  </div>
+</div>
+
+<!-- STORE PAGE -->
+<div id="page-store" class="page active" style="padding:0">
+  <div class="hero">
+    <div class="hero-eyebrow">Rams FX Bots — Professional Series</div>
+    <h1>Automated Forex.<br>Built for <em>Real Profit.</em></h1>
+    <p>Institutional-grade trading bots for XAUUSD and major pairs. Each license is locked to your MT5 account — fully protected, fully yours.</p>
+    <div class="hero-stats">
+      <div class="h-stat"><div class="h-stat-n" id="stat-eas">—</div><div class="h-stat-l">Live EAs</div></div>
+      <div class="h-stat"><div class="h-stat-n">24/7</div><div class="h-stat-l">Operation</div></div>
+      <div class="h-stat"><div class="h-stat-n">MT5</div><div class="h-stat-l">Compatible</div></div>
+      <div class="h-stat"><div class="h-stat-n" id="stat-licenses">—</div><div class="h-stat-l">Active Licenses</div></div>
+    </div>
+  </div>
+  <div style="padding:0 24px 40px">
+    <div class="tag">Available strategies</div>
+    <div class="product-grid" id="product-grid"></div>
+    <div class="trust-bar">
+      <div class="trust-item"><i class="ti ti-shield-lock"></i><div><div class="trust-title">Account-bound license</div><div class="trust-sub">Tied to your MT5 account — cannot be shared</div></div></div>
+      <div class="trust-item"><i class="ti ti-credit-card"></i><div><div class="trust-title">PayPal</div><div class="trust-sub">Instant payment, instant delivery</div></div></div>
+      <div class="trust-item"><i class="ti ti-download"></i><div><div class="trust-title">Instant download</div><div class="trust-sub">Unique .ex5 after payment</div></div></div>
+      <div class="trust-item"><i class="ti ti-headset"></i><div><div class="trust-title">Support</div><div class="trust-sub">Email support with your license</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- CHECKOUT PAGE -->
+<div id="page-checkout" class="page" style="padding:24px">
+  <div class="checkout-wrap">
+
+    <!-- Step 1: Accounts -->
+    <div id="co-step1">
+      <div class="steps">
+        <div class="step active"><span class="step-num">01</span><span class="step-label">Accounts</span></div>
+        <div class="step"><span class="step-num">02</span><span class="step-label">Payment</span></div>
+        <div class="step"><span class="step-num">03</span><span class="step-label">Download</span></div>
+      </div>
+      <div class="order-summary">
+        <div class="os-row"><span class="os-label">Product</span><span class="os-val" id="co-product-name">—</span></div>
+        <div class="os-row"><span class="os-label">License</span><span class="os-val">Lifetime · 2 accounts</span></div>
+        <div class="os-row total"><span class="os-label">Total</span><span class="os-val gold" id="co-product-price">—</span></div>
+      </div>
+      <div class="card" style="margin-bottom:20px">
+        <div class="tag" style="margin-bottom:14px">Step 1 — Bind your MT5 account numbers</div>
+        <div class="notification warn" style="margin-bottom:16px">
+          <i class="ti ti-alert-triangle notif-icon"></i>
+          <div class="notif-text"><strong>Important:</strong> Enter your exact broker account number(s). Your EA only runs on these accounts.</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Account #1 <span style="color:var(--danger)">*</span></label>
+          <input type="text" id="acct1" placeholder="e.g. 12345678" maxlength="12" oninput="this.value=this.value.replace(/\D/g,'')">
+          <div class="form-hint">Your MT5 login number from your broker</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Account #2 <span style="color:var(--muted)">(optional)</span></label>
+          <input type="text" id="acct2" placeholder="e.g. 87654321" maxlength="12" oninput="this.value=this.value.replace(/\D/g,'')">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Your email <span style="color:var(--danger)">*</span></label>
+          <input type="email" id="buyer-email" placeholder="you@example.com">
+          <div class="form-hint">License key and download link sent here</div>
+        </div>
+        <button class="btn btn-gold" style="width:100%;padding:12px;font-size:14px;justify-content:center" onclick="goToStep2()">Continue to payment <i class="ti ti-arrow-right"></i></button>
+      </div>
+      <button class="btn btn-outline" style="width:100%;justify-content:center" onclick="showPage('store')"><i class="ti ti-arrow-left"></i> Back to store</button>
+    </div>
+
+    <!-- Step 2: Payment -->
+    <div id="co-step2" style="display:none">
+      <div class="steps">
+        <div class="step done"><span class="step-num">01</span><span class="step-label">Accounts</span></div>
+        <div class="step active"><span class="step-num">02</span><span class="step-label">Payment</span></div>
+        <div class="step"><span class="step-num">03</span><span class="step-label">Download</span></div>
+      </div>
+      <div class="order-summary">
+        <div class="os-row"><span class="os-label">Product</span><span class="os-val" id="co2-product">—</span></div>
+        <div class="os-row"><span class="os-label">Account #1</span><span class="os-val mono" id="co2-acct1">—</span></div>
+        <div class="os-row"><span class="os-label">Account #2</span><span class="os-val mono" id="co2-acct2">Not added</span></div>
+        <div class="os-row total"><span class="os-label">Total</span><span class="os-val gold" id="co2-price">—</span></div>
+      </div>
+      <div class="card" style="margin-bottom:20px">
+        <div class="tag" style="margin-bottom:14px">Step 2 — Pay securely with PayPal</div>
+        <div id="paypal-button-container"></div>
+        <div style="text-align:center;margin-top:10px;font-size:11px;color:var(--muted)">
+          <i class="ti ti-shield-check"></i> Secure checkout · Instant delivery after payment
+        </div>
+      </div>
+      <button class="btn btn-outline" style="width:100%;justify-content:center" onclick="goBackStep2()"><i class="ti ti-arrow-left"></i> Go back</button>
+    </div>
+
+    <!-- Step 3: Download -->
+    <div id="co-step3" style="display:none">
+      <div class="steps">
+        <div class="step done"><span class="step-num">01</span><span class="step-label">Accounts</span></div>
+        <div class="step done"><span class="step-num">02</span><span class="step-label">Payment</span></div>
+        <div class="step active"><span class="step-num">03</span><span class="step-label">Download</span></div>
+      </div>
+      <div class="confirm-box">
+        <div class="confirm-icon"><i class="ti ti-check" style="color:#2ecc9a;font-size:22px"></i></div>
+        <div class="confirm-title">Payment confirmed!</div>
+        <div class="confirm-sub">Your EA license has been generated. Download your file below.</div>
+        <div style="margin:14px 0">
+          <div class="tag" style="margin-bottom:8px">Licensed to accounts</div>
+          <div id="dl-accounts"></div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px">License key <span style="color:var(--muted)">(click to copy)</span></div>
+        <div class="license-key" id="dl-license" onclick="copyLicenseKey()">—</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:14px">Keep this key safe for support</div>
+        <button class="btn btn-gold download-btn-big" onclick="doDownload()">
+          <i class="ti ti-download"></i> Download <span id="dl-product-name">EA</span>
+        </button>
+        <button class="btn btn-outline" style="width:100%;margin-top:12px;justify-content:center" onclick="showPage('store')"><i class="ti ti-shopping-bag"></i> Back to store</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+var API_BASE = window.location.origin;
+var PRODUCTS = [];
+var curProduct = null, curPrice = 0, curAcct1 = '', curAcct2 = '', curEmail = '';
+var paypalButtonsRendered = false;
+var paypalLoaded = false, paypalClientId = null;
+var paypalCallbacks = [];
+
+// TOAST
+function toast(msg, type, icon) {
+  var c = document.getElementById('toast-container');
+  var t = document.createElement('div');
+  t.className = 'toast ' + (type || 'gold');
+  t.innerHTML = '<i class="ti ' + (icon || 'ti-check') + '"></i><span>' + msg + '</span>';
+  c.appendChild(t);
+  setTimeout(function () { t.style.animation = 'toastOut .3s forwards'; setTimeout(function () { t.remove(); }, 350); }, 3200);
+}
+
+function copyText(text, label) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function () { toast((label || 'Text') + ' copied', 'success', 'ti-copy'); });
+  }
+}
+
+function today() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+
+// PAGES
+function showPage(p) {
+  document.querySelectorAll('.page').forEach(function (el) { el.classList.remove('active'); });
+  document.querySelectorAll('.nav-tab').forEach(function (el) { el.classList.remove('active'); });
+  document.getElementById('page-' + p).classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(function (t, i) {
+    var pages = ['store', 'checkout'];
+    if (pages[i] === p) t.classList.add('active');
+  });
+  if (p === 'checkout' && curProduct) renderPayPalButton();
+}
+
+// LOAD PRODUCTS + CONFIG
+window.addEventListener('DOMContentLoaded', function () {
+  fetch(API_BASE + '/api/products')
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      PRODUCTS = data.products || [];
+      renderProducts();
+      document.getElementById('stat-eas').textContent = PRODUCTS.length;
+    })
+    .catch(function () { toast('Failed to load products', 'danger', 'ti-alert-circle'); });
+  fetch(API_BASE + '/api/admin/stats')
+    .then(function (r) { return r.json(); })
+    .then(function (s) { document.getElementById('stat-licenses').textContent = s.active_licenses || 0; })
+    .catch(function () {});
+  fetch(API_BASE + '/api/config')
+    .then(function (r) { return r.json(); })
+    .then(function (cfg) {
+      paypalClientId = cfg.paypal_client_id;
+      if (cfg.is_local) return;
+      var s = document.createElement('script');
+      s.src = 'https://www.paypal.com/sdk/js?client-id=' + cfg.paypal_client_id + '&currency=USD';
+      s.async = true;
+      s.onload = function () { paypalLoaded = true; paypalCallbacks.forEach(function (c) { c(); }); paypalCallbacks = []; };
+      document.head.appendChild(s);
+    });
+});
+
+// RENDER PRODUCTS
+function renderProducts() {
+  var grid = document.getElementById('product-grid');
+  grid.innerHTML = PRODUCTS.map(function (p) {
+    var badges = '';
+    if (p.tag) badges += '<span class="badge ' + (p.tag_class || 'badge-muted') + '">' + p.tag + '</span>';
+    if (p.badge) badges += '<span class="badge ' + (p.badge_class || 'badge-success') + '">' + p.badge + '</span>';
+    var featList = '';
+    if (p.features && Array.isArray(p.features)) {
+      featList = p.features.map(function (f) { return '<li>' + f + '</li>'; }).join('');
+    }
+    return '<div class="product-card' + (p.featured ? ' featured' : '') + '" onclick="startCheckout(' + p.id + ')">' +
+      '<div class="pc-header"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">' + badges + '</div>' +
+      '<div class="pc-name">' + p.name + '</div><div class="pc-desc">' + (p.description || '') + '</div></div>' +
+      '<div class="pc-body"><ul class="pc-feat">' + featList + '</ul></div>' +
+      '<div class="pc-footer"><div class="pc-price">$' + p.price + ' <span class="pc-period">one-time</span></div>' +
+      '<button class="btn ' + (p.featured ? 'btn-gold' : 'btn-outline') + ' btn-sm" onclick="event.stopPropagation();startCheckout(' + p.id + ')">Buy Now</button></div></div>';
+  }).join('');
+}
+
+// CHECKOUT
+function startCheckout(productId) {
+  var p = PRODUCTS.find(function (x) { return x.id === productId; });
+  if (!p) { toast('Product not found', 'danger', 'ti-alert-circle'); return; }
+  curProduct = p; curPrice = p.price;
+  document.getElementById('co-product-name').textContent = p.name;
+  document.getElementById('co-product-price').textContent = '$' + p.price;
+  document.getElementById('acct1').value = '';
+  document.getElementById('acct2').value = '';
+  document.getElementById('buyer-email').value = '';
+  paypalButtonsRendered = false;
+  showPage('checkout');
+  ['co-step1', 'co-step2', 'co-step3'].forEach(function (id, i) {
+    document.getElementById(id).style.display = i === 0 ? '' : 'none';
+  });
+}
+
+function goToStep2() {
+  var a1 = document.getElementById('acct1').value.trim();
+  var em = document.getElementById('buyer-email').value.trim();
+  if (!a1) { toast('Enter your MT5 account number', 'danger', 'ti-alert-circle'); return; }
+  if (a1.length < 4) { toast('Account number too short', 'danger', 'ti-alert-circle'); return; }
+  if (!em || em.indexOf('@') < 0) { toast('Enter a valid email address', 'danger', 'ti-alert-circle'); return; }
+  curAcct1 = a1; curAcct2 = document.getElementById('acct2').value.trim(); curEmail = em;
+  document.getElementById('co2-product').textContent = curProduct.name;
+  document.getElementById('co2-acct1').textContent = curAcct1;
+  document.getElementById('co2-acct2').textContent = curAcct2 || 'Not added';
+  document.getElementById('co2-price').textContent = '$' + curPrice;
+  document.getElementById('co-step1').style.display = 'none';
+  document.getElementById('co-step2').style.display = '';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  setTimeout(function () { renderPayPalButton(); }, 100);
+}
+
+function goBackStep2() {
+  document.getElementById('co-step2').style.display = 'none';
+  document.getElementById('co-step1').style.display = '';
+}
+
+function renderPayPalButton() {
+  if (paypalButtonsRendered) return;
+  var container = document.getElementById('paypal-button-container');
+  if (!container) return;
+  container.innerHTML = '';
+  var isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  if (isLocal) {
+    container.innerHTML =
+      '<div style="margin-bottom:12px;padding:12px;background:rgba(201,168,76,.08);border:0.5px solid var(--border);border-radius:8px;text-align:center;font-size:12px;color:var(--gold)">' +
+      '<i class="ti ti-flask"></i> Local mode — test payment below</div>' +
+      '<button class="btn btn-gold" style="width:100%;padding:14px;font-size:14px;justify-content:center" onclick="testPayment()">' +
+      '<i class="ti ti-check"></i> Complete test payment</button>';
+    paypalButtonsRendered = true;
+    return;
+  }
+  if (!paypalLoaded || typeof paypal_sdk === 'undefined') {
+    container.innerHTML = '<p style="color:var(--muted2);font-size:13px;text-align:center">Loading PayPal...</p>';
+    paypalCallbacks.push(function () { renderPayPalButton(); });
+    return;
+  }
+  paypal_sdk.Buttons({
+    createOrder: function () {
+      return fetch(API_BASE + '/api/create-paypal-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ product_id: curProduct.id, account_1: curAcct1, account_2: curAcct2, email: curEmail })
+      }).then(function (r) { return r.json(); }).then(function (d) { return d.id; });
+    },
+    onApprove: function (data) {
+      return fetch(API_BASE + '/api/capture-paypal-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paypal_order_id: data.orderID, product_id: curProduct.id, account_1: curAcct1, account_2: curAcct2, email: curEmail })
+      }).then(function (r) { return r.json(); }).then(function (result) {
+        if (result.success) { paypalButtonsRendered = true; showDownload(result); }
+        else { toast('Payment failed: ' + (result.error || 'Unknown'), 'danger', 'ti-alert-circle'); }
+      });
+    },
+    onError: function () { toast('PayPal error — please try again', 'danger', 'ti-alert-circle'); }
+  }).render('#paypal-button-container');
+  paypalButtonsRendered = true;
+}
+
+function testPayment() {
+  var btn = document.querySelector('#paypal-button-container .btn-gold');
+  if (btn) { btn.textContent = 'Processing...'; btn.disabled = true; }
+  fetch(API_BASE + '/api/test-payment', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ product_id: curProduct.id, account_1: curAcct1, account_2: curAcct2, email: curEmail })
+  }).then(function (r) { return r.json(); }).then(function (result) {
+    if (result.success) { paypalButtonsRendered = true; showDownload(result); }
+    else { toast('Test payment failed', 'danger', 'ti-alert-circle'); if (btn) { btn.textContent = 'Complete test payment'; btn.disabled = false; } }
+  }).catch(function () {
+    toast('Test payment error', 'danger', 'ti-alert-circle');
+    if (btn) { btn.textContent = 'Complete test payment'; btn.disabled = false; }
+  });
+}
+
+function showDownload(result) {
+  document.getElementById('dl-license').textContent = result.license_key;
+  document.getElementById('dl-product-name').textContent = curProduct.name;
+  var wrap = document.getElementById('dl-accounts');
+  wrap.innerHTML = '';
+  [curAcct1, curAcct2].filter(Boolean).forEach(function (num) {
+    var d = document.createElement('div');
+    d.className = 'acct-assigned';
+    d.innerHTML = '<span class="acct-assigned-num">' + num + '</span><span class="acct-assigned-badge">Licensed</span>';
+    wrap.appendChild(d);
+  });
+  document.getElementById('co-step2').style.display = 'none';
+  document.getElementById('co-step3').style.display = '';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  toast('Purchase complete! License key: ' + result.license_key, 'success', 'ti-check');
+  window._downloadUrl = result.download_url;
+  window._fileName = result.file_name;
+}
+
+function copyLicenseKey() {
+  var key = document.getElementById('dl-license').textContent;
+  copyText(key, 'License key');
+}
+
+function doDownload() {
+  if (window._downloadUrl) {
+    var a = document.createElement('a');
+    a.href = window._downloadUrl;
+    a.download = window._fileName || 'EA.ex5';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    toast('Downloading ' + (window._fileName || 'EA'), 'success', 'ti-download');
+  } else {
+    toast('Download URL not available — check your email', 'gold', 'ti-mail');
+  }
+}
+
+</script>
+</body>
+</html>

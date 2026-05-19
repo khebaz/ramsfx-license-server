@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rams FX — Admin Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#C9A84C;--gold2:#E8C96A;
+  --dark:#080A0D;--dark2:#0F1217;--dark3:#161B22;--dark4:#1C2330;
+  --text:#E8EBF0;--muted:#6E7A8A;--muted2:#9AABB8;
+  --border:rgba(201,168,76,0.15);--border2:rgba(201,168,76,0.3);
+  --success:#1A9E6E;--danger:#C0392B;
+  --font:'DM Sans',sans-serif;--mono:'DM Mono',monospace;--display:'Syne',sans-serif
+}
+body{font-family:var(--font);background:var(--dark);color:var(--text);font-size:14px;line-height:1.6}
+input,select,textarea{font-family:var(--font);font-size:13px;background:var(--dark3);border:0.5px solid var(--border2);color:var(--text);border-radius:8px;padding:10px 14px;width:100%;outline:none;transition:border-color .2s}
+input:focus,select:focus,textarea:focus{border-color:var(--gold)}
+select option{background:var(--dark3)}
+.btn{font-family:var(--font);cursor:pointer;border:none;border-radius:8px;font-size:13px;font-weight:500;padding:10px 20px;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.btn-gold{background:var(--gold);color:#000}
+.btn-gold:hover{background:var(--gold2);transform:translateY(-1px)}
+.btn-outline{background:transparent;border:0.5px solid var(--border2);color:var(--text)}
+.btn-outline:hover{border-color:var(--gold);color:var(--gold)}
+.btn-danger{background:rgba(192,57,43,.15);color:#e74c3c;border:0.5px solid rgba(192,57,43,.3)}
+.btn-danger:hover{background:rgba(192,57,43,.25)}
+.btn-success{background:rgba(26,158,110,.15);color:#2ecc9a;border:0.5px solid rgba(26,158,110,.3)}
+.btn-sm{padding:6px 14px;font-size:12px}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;padding:3px 10px;border-radius:20px;white-space:nowrap}
+.badge-gold{background:rgba(201,168,76,.12);color:var(--gold);border:0.5px solid var(--border)}
+.badge-success{background:rgba(26,158,110,.12);color:#2ecc9a;border:0.5px solid rgba(26,158,110,.3)}
+.badge-danger{background:rgba(192,57,43,.12);color:#e74c3c;border:0.5px solid rgba(192,57,43,.3)}
+.badge-warn{background:rgba(201,168,76,.1);color:var(--gold2);border:0.5px solid rgba(201,168,76,.25)}
+.badge-info{background:rgba(26,107,174,.12);color:#5dade2;border:0.5px solid rgba(26,107,174,.3)}
+.badge-muted{background:rgba(110,122,138,.1);color:var(--muted2);border:0.5px solid rgba(110,122,138,.2)}
+.card{background:var(--dark3);border:0.5px solid var(--border);border-radius:12px;padding:20px}
+.tag{font-family:var(--mono);font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);padding-bottom:4px}
+.status-dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
+.status-dot.green{background:#2ecc9a;box-shadow:0 0 6px rgba(46,204,154,.5)}
+.status-dot.red{background:#e74c3c}
+.status-dot.amber{background:var(--gold)}
+
+/* LOGIN */
+.login-page{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}
+.login-box{background:var(--dark3);border:0.5px solid var(--border2);border-radius:14px;padding:32px;max-width:380px;width:100%}
+.login-title{font-family:var(--display);font-size:22px;font-weight:700;text-align:center;margin-bottom:6px}
+.login-sub{font-size:12px;color:var(--muted2);text-align:center;margin-bottom:24px}
+
+/* LAYOUT */
+.admin-layout{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+.admin-sidebar{background:var(--dark2);border-right:0.5px solid var(--border);padding:16px 0;display:flex;flex-direction:column}
+.admin-sidebar .logo{padding:14px 18px;margin-bottom:16px;font-family:var(--display);font-weight:800;font-size:16px}
+.admin-sidebar .logo em{color:var(--gold);font-style:normal}
+.admin-nav-item{display:flex;align-items:center;gap:10px;padding:10px 18px;font-size:13px;color:var(--muted2);cursor:pointer;transition:all .2s;border-left:2px solid transparent}
+.admin-nav-item:hover{color:var(--text);background:rgba(255,255,255,.02)}
+.admin-nav-item.active{color:var(--gold);border-left-color:var(--gold);background:rgba(201,168,76,.05)}
+.admin-nav-item i{font-size:16px}
+.sidebar-footer{margin-top:auto;padding:12px 18px;border-top:0.5px solid var(--border);font-size:12px;color:var(--muted)}
+.sidebar-footer .logout-btn{background:none;border:none;color:var(--muted2);cursor:pointer;font-size:12px;display:flex;align-items:center;gap:6px;padding:4px 0}
+.sidebar-footer .logout-btn:hover{color:var(--danger)}
+.admin-content{padding:24px;overflow:auto;max-height:100vh}
+.admin-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.admin-title{font-family:var(--display);font-size:20px;font-weight:700}
+
+/* METRICS */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:24px}
+.metric{background:var(--dark3);border:0.5px solid var(--border);border-radius:10px;padding:14px 16px}
+.metric:hover{border-color:var(--border2)}
+.metric-label{font-size:11px;color:var(--muted);font-family:var(--mono);letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px}
+.metric-value{font-family:var(--display);font-size:22px;font-weight:700}
+.metric-value.gold{color:var(--gold)}
+.metric-value.green{color:#2ecc9a}
+.metric-value.red{color:#e74c3c}
+
+/* TABLE */
+.data-table{width:100%;border-collapse:collapse;font-size:12px}
+.data-table th{text-align:left;padding:10px 12px;font-size:10px;font-family:var(--mono);letter-spacing:.8px;text-transform:uppercase;color:var(--muted);border-bottom:0.5px solid var(--border);font-weight:400}
+.data-table td{padding:10px 12px;border-bottom:0.5px solid rgba(255,255,255,.04);vertical-align:middle}
+.data-table tr:hover td{background:rgba(255,255,255,.015)}
+.mono{font-family:var(--mono);font-size:11px;color:var(--muted2)}
+.action-row{display:flex;gap:6px;align-items:center}
+.panel-section{margin-bottom:28px}
+.panel-section-title{font-size:12px;font-weight:500;color:var(--muted2);font-family:var(--mono);letter-spacing:.8px;text-transform:uppercase;margin-bottom:14px;padding-bottom:8px;border-bottom:0.5px solid var(--border)}
+
+/* UPLOAD */
+.upload-zone{border:0.5px dashed var(--border2);border-radius:10px;padding:32px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--gold);background:rgba(201,168,76,.03)}
+.upload-zone i{font-size:32px;color:var(--muted);margin-bottom:10px;display:block}
+.upload-zone p{font-size:13px;color:var(--muted2);margin-bottom:4px}
+.upload-zone span{font-size:11px;color:var(--muted)}
+
+/* FILE LIST */
+.file-list-item{display:flex;align-items:center;gap:12px;padding:12px;background:var(--dark3);border:0.5px solid var(--border);border-radius:8px;margin-bottom:8px;transition:border-color .2s}
+.file-list-item:hover{border-color:var(--border2)}
+.file-icon{width:36px;height:36px;background:rgba(201,168,76,.08);border:0.5px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;color:var(--gold)}
+.file-info{flex:1;min-width:0}
+.file-name{font-size:12px;font-weight:500;font-family:var(--mono)}
+.file-meta{font-size:11px;color:var(--muted);margin-top:1px}
+
+/* FORM */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-group{margin-bottom:14px}
+.form-label{display:block;font-size:12px;color:var(--muted2);margin-bottom:6px;font-weight:500}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:999;backdrop-filter:blur(4px);animation:fadeIn .2s}
+.modal{background:var(--dark3);border:0.5px solid var(--border2);border-radius:14px;padding:24px;max-width:500px;width:90%;animation:slideUp .25s}
+.modal-title{font-family:var(--display);font-size:17px;font-weight:700;margin-bottom:6px}
+.modal-sub{font-size:12px;color:var(--muted2);margin-bottom:20px;line-height:1.6}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+
+/* TOAST */
+#toast-container{position:fixed;bottom:24px;right:24px;z-index:10000;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--dark3);border:0.5px solid var(--border2);border-radius:10px;padding:12px 18px;font-size:13px;display:flex;align-items:center;gap:10px;animation:toastIn .3s forwards;max-width:320px;box-shadow:0 8px 32px rgba(0,0,0,.5)}
+.toast.success{border-color:rgba(26,158,110,.4)}
+.toast.danger{border-color:rgba(192,57,43,.4)}
+.toast.gold{border-color:var(--border2)}
+.toast i{font-size:16px;flex-shrink:0}
+.toast.success i{color:#2ecc9a}
+.toast.danger i{color:#e74c3c}
+.toast.gold i{color:var(--gold)}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+@keyframes toastOut{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(20px)}}
+
+.page{display:none}
+.page.active{display:block}
+.filter-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.search-input{position:relative;flex:1;min-width:180px}
+.search-input input{padding-left:36px}
+.search-input i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:15px;pointer-events:none}
+.empty-state{text-align:center;padding:48px 24px;color:var(--muted)}
+.empty-state i{font-size:40px;margin-bottom:12px;display:block;opacity:.4}
+.empty-state p{font-size:13px}
+
+@media(max-width:700px){
+  .admin-layout{grid-template-columns:1fr}
+  .admin-sidebar{display:none}
+  .metrics{grid-template-columns:repeat(2,1fr)}
+  .two-col{grid-template-columns:1fr}
+  .data-table{font-size:11px}
+  .data-table th,.data-table td{padding:6px 8px}
+}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(201,168,76,.2);border-radius:4px}
+</style>
+</head>
+<body>
+
+<div id="toast-container"></div>
+
+<!-- LOGIN PAGE -->
+<div id="page-login" class="page active">
+  <div class="login-page">
+    <div class="login-box">
+      <div class="login-title">Rams <span style="color:var(--gold)">FX</span></div>
+      <div class="login-sub">Admin Dashboard — sign in to continue</div>
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <input type="text" id="login-username" placeholder="admin" value="admin">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" id="login-password" placeholder="••••••••" value="admin123" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <button class="btn btn-gold" style="width:100%;padding:12px;justify-content:center" onclick="doLogin()">Sign in <i class="ti ti-arrow-right"></i></button>
+      <div id="login-error" style="color:var(--danger);font-size:12px;text-align:center;margin-top:12px;display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN DASHBOARD -->
+<div id="page-dashboard" class="page" style="padding:0">
+  <div class="admin-layout">
+    <div class="admin-sidebar">
+      <div class="logo">Rams <em>FX</em></div>
+      <div class="admin-nav-item active" onclick="switchTab('overview')"><i class="ti ti-layout-dashboard"></i>Overview</div>
+      <div class="admin-nav-item" onclick="switchTab('products')"><i class="ti ti-package"></i>Products</div>
+      <div class="admin-nav-item" onclick="switchTab('files')"><i class="ti ti-files"></i>EA Files</div>
+      <div class="admin-nav-item" onclick="switchTab('licenses')"><i class="ti ti-key"></i>Licenses</div>
+      <div class="admin-nav-item" onclick="switchTab('orders')"><i class="ti ti-shopping-cart"></i>Orders</div>
+      <div class="sidebar-footer">
+        <div style="margin-bottom:4px;font-size:11px;color:var(--muted)">Signed in as <strong id="sidebar-user">admin</strong></div>
+        <button class="logout-btn" onclick="logout()"><i class="ti ti-logout"></i> Sign out</button>
+      </div>
+    </div>
+
+    <div class="admin-content">
+
+      <!-- OVERVIEW -->
+      <div id="tab-overview" class="page active">
+        <div class="admin-header"><div class="admin-title">Overview</div></div>
+        <div class="metrics">
+          <div class="metric"><div class="metric-label">Total Revenue</div><div class="metric-value gold" id="stat-revenue">$0</div></div>
+          <div class="metric"><div class="metric-label">Active Licenses</div><div class="metric-value green" id="stat-licenses">0</div></div>
+          <div class="metric"><div class="metric-label">Total Orders</div><div class="metric-value" id="stat-orders">0</div></div>
+          <div class="metric"><div class="metric-label">Revoked</div><div class="metric-value red" id="stat-revoked">0</div></div>
+        </div>
+        <div class="panel-section">
+          <div class="panel-section-title">Products on sale</div>
+          <div id="overview-products"></div>
+        </div>
+      </div>
+
+      <!-- PRODUCTS -->
+      <div id="tab-products" class="page">
+        <div class="admin-header">
+          <div class="admin-title">Products</div>
+          <button class="btn btn-gold btn-sm" onclick="showProductForm()"><i class="ti ti-plus"></i> Add product</button>
+        </div>
+        <table class="data-table">
+          <thead><tr><th>Name</th><th>Price</th><th>Tag</th><th>Featured</th><th>File</th><th>Actions</th></tr></thead>
+          <tbody id="products-tbody"></tbody>
+        </table>
+        <div id="products-empty" class="empty-state" style="display:none"><i class="ti ti-package-off"></i><p>No products</p></div>
+      </div>
+
+      <!-- EA FILES -->
+      <div id="tab-files" class="page">
+        <div class="admin-header">
+          <div class="admin-title">EA File Manager</div>
+          <button class="btn btn-gold btn-sm" onclick="document.getElementById('file-input').click()"><i class="ti ti-upload"></i> Upload EA</button>
+        </div>
+        <input type="file" id="file-input" accept=".ex5,.mq5" style="display:none" onchange="handleFileUpload(event)">
+        <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+          <i class="ti ti-cloud-upload"></i>
+          <p>Drop your compiled .ex5 file here</p>
+          <span>Max 10MB · .ex5 files only</span>
+        </div>
+        <div class="tag" style="margin:20px 0 14px">Uploaded files</div>
+        <div id="file-list"></div>
+      </div>
+
+      <!-- LICENSES -->
+      <div id="tab-licenses" class="page">
+        <div class="admin-header">
+          <div class="admin-title">License Management</div>
+          <button class="btn btn-gold btn-sm" onclick="showLicenseForm()"><i class="ti ti-plus"></i> Issue license</button>
+        </div>
+        <div class="filter-row" style="margin-bottom:16px">
+          <div class="search-input">
+            <i class="ti ti-search"></i>
+            <input type="text" id="lic-search" placeholder="Search key or account..." oninput="renderLicenses()">
+          </div>
+          <select style="width:auto;padding:7px 12px" id="lic-status-filter" onchange="renderLicenses()">
+            <option value="">All statuses</option>
+            <option>Active</option>
+            <option>Revoked</option>
+          </select>
+        </div>
+        <table class="data-table">
+          <thead><tr><th>License Key</th><th>Product</th><th>Accounts</th><th>Email</th><th>Issued</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="licenses-tbody"></tbody>
+        </table>
+        <div id="licenses-empty" class="empty-state" style="display:none"><i class="ti ti-key-off"></i><p>No licenses</p></div>
+      </div>
+
+      <!-- ORDERS -->
+      <div id="tab-orders" class="page">
+        <div class="admin-header">
+          <div class="admin-title">Orders</div>
+          <select style="width:auto;padding:7px 12px" id="ord-status-filter" onchange="renderOrders()">
+            <option value="">All statuses</option>
+            <option>Complete</option>
+            <option>Pending</option>
+            <option>Refunded</option>
+          </select>
+        </div>
+        <table class="data-table">
+          <thead><tr><th>Order</th><th>Product</th><th>Customer</th><th>Accounts</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="orders-tbody"></tbody>
+        </table>
+        <div id="orders-empty" class="empty-state" style="display:none"><i class="ti ti-shopping-bag-x"></i><p>No orders</p></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- PRODUCT FORM MODAL -->
+<div id="product-modal" class="modal-overlay" style="display:none" onclick="closeModal('product-modal')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title" id="pf-title">Add product</div>
+    <div class="modal-sub" id="pf-sub">Fill in product details</div>
+    <div class="two-col">
+      <div class="form-group"><label class="form-label">Name *</label><input type="text" id="pf-name"></div>
+      <div class="form-group"><label class="form-label">Price ($) *</label><input type="number" id="pf-price" min="1"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Description</label><textarea id="pf-desc" rows="3"></textarea></div>
+    <div class="form-group"><label class="form-label">Features (one per line)</label><textarea id="pf-features" rows="4" placeholder="XAUUSD specialist&#10;Quantum Trend Engine&#10;Auto partial close"></textarea></div>
+    <div class="two-col">
+      <div class="form-group"><label class="form-label">Tag</label><input type="text" id="pf-tag" placeholder="Best Seller"></div>
+      <div class="form-group"><label class="form-label">Badge</label><input type="text" id="pf-badge" placeholder="In Stock"></div>
+    </div>
+    <div class="form-group">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+        <input type="checkbox" id="pf-featured" style="width:auto"> Featured product
+      </label>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-sm" onclick="closeModal('product-modal')">Cancel</button>
+      <button class="btn btn-gold btn-sm" onclick="saveProduct()"><i class="ti ti-check"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- LICENSE FORM MODAL -->
+<div id="license-modal" class="modal-overlay" style="display:none" onclick="closeModal('license-modal')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">Issue manual license</div>
+    <div class="modal-sub">Generate a license key for a customer</div>
+    <div class="form-group">
+      <label class="form-label">Product</label>
+      <select id="lm-product"></select>
+    </div>
+    <div class="two-col">
+      <div class="form-group"><label class="form-label">Account #1 *</label><input type="text" id="lm-acct1" placeholder="MT5 account" oninput="this.value=this.value.replace(/\D/g,'')"></div>
+      <div class="form-group"><label class="form-label">Account #2</label><input type="text" id="lm-acct2" placeholder="Optional" oninput="this.value=this.value.replace(/\D/g,'')"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Customer email</label><input type="email" id="lm-email" placeholder="customer@email.com"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-sm" onclick="closeModal('license-modal')">Cancel</button>
+      <button class="btn btn-gold btn-sm" onclick="issueLicense()"><i class="ti ti-key"></i> Generate license</button>
+    </div>
+  </div>
+</div>
+
+<!-- ORDER DETAIL MODAL -->
+<div id="order-modal" class="modal-overlay" style="display:none" onclick="closeModal('order-modal')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title" id="om-title">Order detail</div>
+    <div class="modal-sub" id="om-sub"></div>
+    <div id="om-content"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline btn-sm" onclick="closeModal('order-modal')">Close</button>
+      <button class="btn btn-danger btn-sm" id="om-refund-btn" onclick="refundOrder()" style="display:none">Issue refund</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var API_BASE = window.location.origin;
+var TOKEN = localStorage.getItem('admin_token');
+var USERNAME = localStorage.getItem('admin_user') || 'Admin';
+var EDITING_PRODUCT_ID = null;
+
+// TOAST
+function toast(msg, type, icon) {
+  var c = document.getElementById('toast-container');
+  var t = document.createElement('div');
+  t.className = 'toast ' + (type || 'gold');
+  t.innerHTML = '<i class="ti ' + (icon || 'ti-check') + '"></i><span>' + msg + '</span>';
+  c.appendChild(t);
+  setTimeout(function () { t.style.animation = 'toastOut .3s forwards'; setTimeout(function () { t.remove(); }, 350); }, 3200);
+}
+
+function copyText(text, label) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function () { toast((label || 'Text') + ' copied', 'success', 'ti-copy'); });
+  }
+}
+
+function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+function $(id) { return document.getElementById(id); }
+
+function api(path, opts) {
+  opts = opts || {};
+  var headers = { 'Content-Type': 'application/json' };
+  if (TOKEN) headers['Authorization'] = 'Bearer ' + TOKEN;
+  return fetch(API_BASE + path, {
+    method: opts.method || 'GET',
+    headers: headers,
+    body: opts.body ? JSON.stringify(opts.body) : undefined
+  }).then(function (r) { return r.json(); });
+}
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(function (el) { el.classList.remove('active'); });
+  $(id).classList.add('active');
+}
+
+// LOGIN
+function doLogin() {
+  var u = $('login-username').value.trim();
+  var p = $('login-password').value.trim();
+  $('login-error').style.display = 'none';
+  fetch(API_BASE + '/api/admin/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: u, password: p })
+  }).then(function (r) { return r.json(); }).then(function (data) {
+    if (data.token) {
+      TOKEN = data.token; USERNAME = data.username;
+      localStorage.setItem('admin_token', data.token);
+      localStorage.setItem('admin_user', data.username);
+      initDashboard();
+    } else {
+      $('login-error').textContent = data.error || 'Invalid credentials';
+      $('login-error').style.display = '';
+    }
+  }).catch(function () {
+    $('login-error').textContent = 'Connection error';
+    $('login-error').style.display = '';
+  });
+}
+
+function logout() {
+  TOKEN = null;
+  localStorage.removeItem('admin_token');
+  localStorage.removeItem('admin_user');
+  showPage('page-login');
+}
+
+// INIT
+function initDashboard() {
+  showPage('page-dashboard');
+  $('sidebar-user').textContent = USERNAME;
+  loadOverview();
+  loadProducts();
+  loadFiles();
+  loadLicenses();
+  loadOrders();
+  setupDropzone();
+}
+
+if (TOKEN) { initDashboard(); }
+
+// TABS
+function switchTab(t) {
+  document.querySelectorAll('.page[id^="tab-"]').forEach(function (el) { el.classList.remove('active'); });
+  $('tab-' + t).classList.add('active');
+  document.querySelectorAll('.admin-nav-item').forEach(function (el, i) {
+    var tabs = ['overview', 'products', 'files', 'licenses', 'orders'];
+    el.classList.toggle('active', tabs[i] === t);
+  });
+  if (t === 'overview') loadOverview();
+  if (t === 'products') loadProducts();
+  if (t === 'files') loadFiles();
+  if (t === 'licenses') loadLicenses();
+  if (t === 'orders') loadOrders();
+}
+
+// OVERVIEW
+function loadOverview() {
+  api('/api/admin/stats').then(function (s) {
+    $('stat-revenue').textContent = '$' + (s.revenue || 0).toLocaleString();
+    $('stat-licenses').textContent = s.active_licenses || 0;
+    $('stat-orders').textContent = s.total_orders || 0;
+    $('stat-revoked').textContent = s.revoked || 0;
+  });
+  api('/api/admin/products').then(function (d) {
+    var el = $('overview-products');
+    if (!d.products || !d.products.length) { el.innerHTML = '<div class="empty-state"><p>No products yet</p></div>'; return; }
+    el.innerHTML = d.products.map(function (p) {
+      return '<div class="file-list-item"><div class="file-icon"><i class="ti ti-package"></i></div><div class="file-info"><div class="file-name">' + p.name + '</div><div class="file-meta">$' + p.price + (p.featured ? ' · Featured' : '') + (p.is_active ? '' : ' · Archived') + '</div></div></div>';
+    }).join('');
+  });
+}
+
+// PRODUCTS
+function loadProducts() {
+  api('/api/admin/products').then(function (d) {
+    var tbody = $('products-tbody');
+    var arr = d.products || [];
+    $('products-empty').style.display = arr.length ? 'none' : '';
+    tbody.innerHTML = arr.map(function (p) {
+      return '<tr>' +
+        '<td>' + p.name + '</td>' +
+        '<td style="color:var(--gold);font-weight:500">$' + p.price + '</td>' +
+        '<td><span class="badge ' + (p.tag_class || 'badge-muted') + '">' + (p.tag || '—') + '</span></td>' +
+        '<td>' + (p.featured ? '<span class="badge badge-gold">Featured</span>' : '—') + '</td>' +
+        '<td class="mono">' + (p.file_name || '—') + '</td>' +
+        '<td><div class="action-row">' +
+        '<button class="btn btn-outline btn-sm" onclick="editProduct(' + p.id + ')"><i class="ti ti-edit"></i></button>' +
+        (p.is_active ? '<button class="btn btn-danger btn-sm" onclick="deleteProduct(' + p.id + ')"><i class="ti ti-trash"></i></button>' : '') +
+        '</div></td></tr>';
+    }).join('');
+  });
+}
+
+function showProductForm(data) {
+  EDITING_PRODUCT_ID = data ? data.id : null;
+  $('pf-title').textContent = data ? 'Edit product' : 'Add product';
+  $('pf-sub').textContent = data ? 'Update product details' : 'Fill in product details';
+  $('pf-name').value = data ? data.name : '';
+  $('pf-price').value = data ? data.price : '';
+  $('pf-desc').value = data ? (data.description || '') : '';
+  $('pf-features').value = data && data.features ? (Array.isArray(data.features) ? data.features.join('\n') : data.features) : '';
+  $('pf-tag').value = data ? (data.tag || '') : '';
+  $('pf-badge').value = data ? (data.badge || '') : '';
+  $('pf-featured').checked = data ? !!data.featured : false;
+  $('product-modal').style.display = 'flex';
+}
+
+function editProduct(id) {
+  api('/api/admin/products').then(function (d) {
+    var p = (d.products || []).find(function (x) { return x.id === id; });
+    if (p) showProductForm(p);
+  });
+}
+
+function saveProduct() {
+  var body = {
+    name: $('pf-name').value.trim(),
+    price: parseInt($('pf-price').value) || 0,
+    description: $('pf-desc').value.trim(),
+    features: $('pf-features').value.split('\n').map(function (s) { return s.trim(); }).filter(Boolean),
+    tag: $('pf-tag').value.trim() || null,
+    badge: $('pf-badge').value.trim() || null,
+    featured: $('pf-featured').checked
+  };
+  if (!body.name || !body.price) { toast('Name and price required', 'danger', 'ti-alert-circle'); return; }
+  var url = EDITING_PRODUCT_ID ? '/api/admin/products/' + EDITING_PRODUCT_ID : '/api/admin/products';
+  var method = EDITING_PRODUCT_ID ? 'PUT' : 'POST';
+  api(url, { method: method, body: body }).then(function (r) {
+    if (r.success) { toast('Product saved', 'success', 'ti-check'); closeModal('product-modal'); loadProducts(); loadOverview(); }
+    else { toast('Error: ' + (r.error || 'Unknown'), 'danger', 'ti-alert-circle'); }
+  });
+}
+
+function deleteProduct(id) {
+  if (!confirm('Delete this product?')) return;
+  api('/api/admin/products/' + id, { method: 'DELETE' }).then(function () {
+    toast('Product deleted', 'success', 'ti-check'); loadProducts(); loadOverview();
+  });
+}
+
+// EA FILES
+function loadFiles() {
+  api('/api/admin/files').then(function (d) {
+    var list = $('file-list');
+    var arr = d.files || [];
+    if (!arr.length) { list.innerHTML = '<div class="empty-state"><i class="ti ti-files-off"></i><p>No files uploaded</p></div>'; return; }
+    list.innerHTML = arr.map(function (f) {
+      return '<div class="file-list-item">' +
+        '<div class="file-icon"><i class="ti ti-file-code"></i></div>' +
+        '<div class="file-info"><div class="file-name">' + f.original_name + '</div>' +
+        '<div class="file-meta">' + (f.size ? (f.size / 1024).toFixed(0) + ' KB' : '—') + ' · ' + (f.created_at || '') + (f.product_name ? ' · Linked to: ' + f.product_name : '') + '</div></div>' +
+        '<span class="badge ' + (f.is_active ? 'badge-success' : 'badge-muted') + '">' + (f.is_active ? 'Active' : 'Archived') + '</span>' +
+        '<button class="btn btn-outline btn-sm" onclick="linkFileToProduct(' + f.id + ')" title="Link to product"><i class="ti ti-link"></i></button>' +
+        '<button class="btn btn-outline btn-sm" onclick="deleteFile(' + f.id + ')" title="Delete"><i class="ti ti-trash" style="color:#e74c3c"></i></button>' +
+        '</div>';
+    }).join('');
+  });
+}
+
+function handleFileUpload(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 10 * 1024 * 1024) { toast('File too large (max 10MB)', 'danger', 'ti-alert-circle'); return; }
+  var fd = new FormData();
+  fd.append('file', file);
+  fetch(API_BASE + '/api/admin/files/upload', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + TOKEN },
+    body: fd
+  }).then(function (r) { return r.json(); }).then(function (data) {
+    if (data.success) { toast('Uploaded ' + file.name, 'success', 'ti-upload'); loadFiles(); }
+    else { toast('Upload failed', 'danger', 'ti-alert-circle'); }
+  }).catch(function () { toast('Upload failed', 'danger', 'ti-alert-circle'); });
+  e.target.value = '';
+}
+
+function setupDropzone() {
+  var zone = $('upload-zone');
+  if (!zone) return;
+  zone.addEventListener('dragover', function (e) { e.preventDefault(); zone.classList.add('drag'); });
+  zone.addEventListener('dragleave', function () { zone.classList.remove('drag'); });
+  zone.addEventListener('drop', function (e) {
+    e.preventDefault(); zone.classList.remove('drag');
+    var file = e.dataTransfer.files[0];
+    if (file) {
+      var input = $('file-input');
+      var dt = new DataTransfer();
+      dt.items.add(file);
+      input.files = dt.files;
+      handleFileUpload({ target: { files: [file], value: '' } });
+    }
+  });
+}
+
+function deleteFile(id) {
+  if (!confirm('Delete this file permanently?')) return;
+  api('/api/admin/files/' + id, { method: 'DELETE' }).then(function () { toast('File deleted', 'success', 'ti-check'); loadFiles(); });
+}
+
+function linkFileToProduct(id) {
+  api('/api/admin/products').then(function (d) {
+    var products = d.products || [];
+    var opts = products.map(function (p) { return '<option value="' + p.id + '">' + p.name + '</option>'; }).join('');
+    var sel = prompt('Enter product ID to link this file to:\n' + products.map(function (p) { return p.id + ': ' + p.name; }).join('\n'));
+    if (sel) {
+      api('/api/admin/files/' + id, { method: 'PUT', body: { product_id: parseInt(sel) } }).then(function () {
+        toast('File linked', 'success', 'ti-check'); loadFiles();
+      });
+    }
+  });
+}
+
+// LICENSES
+function loadLicenses() {
+  api('/api/admin/licenses').then(function (d) {
+    var arr = d.licenses || [];
+    var search = ($('lic-search') || { value: '' }).value.toLowerCase();
+    var statusF = ($('lic-status-filter') || { value: '' }).value;
+    var filtered = arr.filter(function (l) {
+      if (statusF) { var s = l.is_active ? 'Active' : 'Revoked'; if (s !== statusF) return false; }
+      if (search) { var t = (l.license_key + ' ' + l.account_1 + ' ' + l.account_2 + ' ' + l.email).toLowerCase(); if (t.indexOf(search) < 0) return false; }
+      return true;
+    });
+    var tbody = $('licenses-tbody');
+    $('licenses-empty').style.display = filtered.length ? 'none' : '';
+    tbody.innerHTML = filtered.map(function (l) {
+      var isActive = l.is_active == 1;
+      var accts = l.account_1 + (l.account_2 ? ', ' + l.account_2 : '');
+      return '<tr class="' + (isActive ? '' : 'revoked') + '">' +
+        '<td><span class="mono" style="cursor:pointer;color:var(--gold)" onclick="copyText(\'' + l.license_key + '\',\'License key\')" title="Click to copy">' + l.license_key + '</span></td>' +
+        '<td>' + (l.product_name || '—') + '</td>' +
+        '<td class="mono">' + accts + '</td>' +
+        '<td class="mono">' + (l.email || '—') + '</td>' +
+        '<td class="mono">' + (l.created_at || '').substring(0, 10) + '</td>' +
+        '<td><span class="badge ' + (isActive ? 'badge-success' : 'badge-danger') + '">' + (isActive ? 'Active' : 'Revoked') + '</span></td>' +
+        '<td><div class="action-row">' +
+        (isActive ? '<button class="btn btn-danger btn-sm" onclick="revokeLicense(' + l.id + ')">Revoke</button>' : '<button class="btn btn-success btn-sm" onclick="restoreLicense(' + l.id + ')">Restore</button>') +
+        '</div></td></tr>';
+    }).join('');
+  });
+}
+
+function showLicenseForm() {
+  $('lm-product').innerHTML = '<option value="">Select product</option>';
+  api('/api/admin/products').then(function (d) {
+    (d.products || []).forEach(function (p) {
+      var opt = document.createElement('option');
+      opt.value = p.id; opt.textContent = p.name;
+      $('lm-product').appendChild(opt);
+    });
+  });
+  $('lm-acct1').value = ''; $('lm-acct2').value = ''; $('lm-email').value = '';
+  $('license-modal').style.display = 'flex';
+}
+
+function issueLicense() {
+  var body = {
+    product_id: parseInt($('lm-product').value) || null,
+    account_1: $('lm-acct1').value.trim(),
+    account_2: $('lm-acct2').value.trim() || null,
+    email: $('lm-email').value.trim() || null
+  };
+  if (!body.account_1) { toast('Account #1 is required', 'danger', 'ti-alert-circle'); return; }
+  api('/api/admin/licenses', { method: 'POST', body: body }).then(function (r) {
+    if (r.success) { toast('License issued: ' + r.license_key, 'success', 'ti-key'); closeModal('license-modal'); loadLicenses(); loadOverview(); }
+    else { toast('Error: ' + (r.error || 'Unknown'), 'danger', 'ti-alert-circle'); }
+  });
+}
+
+function revokeLicense(id) {
+  if (!confirm('Revoke this license?')) return;
+  api('/api/admin/licenses/revoke', { method: 'POST', body: { id: id } }).then(function () {
+    toast('License revoked', 'danger', 'ti-key-off'); loadLicenses(); loadOverview();
+  });
+}
+
+function restoreLicense(id) {
+  api('/api/admin/licenses/restore', { method: 'POST', body: { id: id } }).then(function () {
+    toast('License restored', 'success', 'ti-check'); loadLicenses(); loadOverview();
+  });
+}
+
+// ORDERS
+function loadOrders() {
+  api('/api/admin/orders').then(function (d) {
+    var arr = d.orders || [];
+    var statusF = ($('ord-status-filter') || { value: '' }).value;
+    var filtered = statusF ? arr.filter(function (o) { return o.status === statusF; }) : arr;
+    var tbody = $('orders-tbody');
+    $('orders-empty').style.display = filtered.length ? 'none' : '';
+    var sc = { Complete: 'badge-success', Pending: 'badge-warn', Refunded: 'badge-danger' };
+    tbody.innerHTML = filtered.map(function (o) {
+      return '<tr>' +
+        '<td class="mono">' + o.order_number + '</td>' +
+        '<td>' + (o.product_name || '—') + '</td>' +
+        '<td class="mono">' + (o.customer_email || '—') + '</td>' +
+        '<td class="mono">' + (o.account_1 || '') + (o.account_2 ? ', ' + o.account_2 : '') + '</td>' +
+        '<td style="color:var(--gold);font-weight:500">$' + (o.amount || 0) + '</td>' +
+        '<td><span class="badge ' + (sc[o.status] || 'badge-muted') + '">' + o.status + '</span></td>' +
+        '<td><button class="btn btn-outline btn-sm" onclick="viewOrder(' + o.id + ')"><i class="ti ti-eye"></i></button></td></tr>';
+    }).join('');
+  });
+}
+
+function viewOrder(id) {
+  api('/api/admin/orders').then(function (d) {
+    var o = (d.orders || []).find(function (x) { return x.id === id; });
+    if (!o) return;
+    $('om-title').textContent = 'Order ' + o.order_number;
+    $('om-sub').textContent = (o.product_name || 'Product') + ' · ' + (o.customer_email || '');
+    var sc = { Complete: 'badge-success', Pending: 'badge-warn', Refunded: 'badge-danger' };
+    $('om-content').innerHTML = '<div style="background:var(--dark4);border:0.5px solid var(--border);border-radius:10px;padding:16px">' +
+      '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px"><span style="color:var(--muted2)">Order</span><span class="mono">' + o.order_number + '</span></div>' +
+      '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px"><span style="color:var(--muted2)">Product</span><span>' + o.product_name + '</span></div>' +
+      '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px"><span style="color:var(--muted2)">Customer</span><span class="mono">' + o.customer_email + '</span></div>' +
+      '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px"><span style="color:var(--muted2)">Accounts</span><span class="mono">' + (o.account_1 || '') + (o.account_2 ? ', ' + o.account_2 : '') + '</span></div>' +
+      '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px"><span style="color:var(--muted2)">Payment</span><span>' + (o.payment_method || 'PayPal') + '</span></div>' +
+      '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;border-top:0.5px solid var(--border);margin-top:8px;padding-top:10px;font-weight:500"><span style="color:var(--muted2)">Amount</span><span style="color:var(--gold);font-weight:700">$' + (o.amount || 0) + '</span></div>' +
+      '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px"><span style="color:var(--muted2)">Status</span><span class="badge ' + (sc[o.status] || 'badge-muted') + '">' + o.status + '</span></div>' +
+      '</div>';
+    $('om-refund-btn').style.display = o.status === 'Complete' ? '' : 'none';
+    $('om-refund-btn').onclick = function () { doRefund(o.id); };
+    $('order-modal').style.display = 'flex';
+  });
+}
+
+function doRefund(id) {
+  if (!confirm('Issue refund for this order? License will be revoked.')) return;
+  api('/api/admin/orders/refund', { method: 'POST', body: { id: id } }).then(function () {
+    toast('Refund processed', 'danger', 'ti-receipt-refund'); closeModal('order-modal'); loadOrders(); loadOverview();
+  });
+}
+
+</script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+node_modules/
+ramsfx.db
+ramsfx.db-shm
+ramsfx.db-wal
+uploads/
+.env
