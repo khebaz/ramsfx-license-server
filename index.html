@@ -324,7 +324,8 @@ window.addEventListener('DOMContentLoaded', function () {
       paypalClientId = cfg.paypal_client_id;
       if (!cfg.is_local) {
         var s = document.createElement('script');
-        s.src = 'https://www.paypal.com/sdk/js?client-id=' + cfg.paypal_client_id + '&currency=USD&intent=capture';
+        s.src = 'https://www.paypal.com/sdk/js?client-id=' + cfg.paypal_client_id + '&currency=USD';
+        s.setAttribute('data-namespace', 'paypal_sdk');
         s.async = true;
         s.onload = function () { startPayPalPolling(); };
         document.head.appendChild(s);
