@@ -148,6 +148,25 @@ app.get('/api/debug-paypal', async (req, res) => {
   }
 });
 
+app.post('/api/debug-create-order', async (req, res) => {
+  try {
+    const token = await getPayPalAccessToken();
+    const testBody = {
+      intent: 'CAPTURE',
+      purchase_units: [{ amount: { currency_code: 'USD', value: '5.00' }, description: 'Debug test' }]
+    };
+    const ppRes = await fetch(PAYPAL_API + '/v2/checkout/orders', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify(testBody)
+    });
+    const order = await ppRes.json();
+    res.json({ status: ppRes.status, sent: testBody, received: order });
+  } catch (e) {
+    res.json({ error: e.message });
+  }
+});
+
 app.get('/api/products', (req, res) => {
   try {
     const rows = db.prepare(`SELECT p.*, f.original_name as file_name, f.stored_name, f.id as file_id
@@ -218,7 +237,10 @@ app.post('/api/create-paypal-order', async (req, res) => {
       })
     });
     const order = await ppRes.json();
-    if (!order.id) return res.status(500).json({ error: 'PayPal order creation failed', detail: order.message || order.name || JSON.stringify(order) });
+    if (!order.id) {
+      console.error('PayPal create-order failed:', ppRes.status, JSON.stringify(order));
+      return res.status(500).json({ error: 'PayPal order creation failed', detail: order.message || order.name || JSON.stringify(order), paypal_debug: order.debug_id || null });
+    }
     res.json({ id: order.id });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
