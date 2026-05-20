@@ -434,7 +434,10 @@ function renderPayPalButton() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ product_id: curProduct.id, account_1: curAcct1, account_2: curAcct2, email: curEmail })
-      }).then(function (r) { return r.json(); }).then(function (d) { return d.id; });
+      }).then(function (r) { return r.json(); }).then(function (d) {
+        if (!d.id) { throw new Error(d.error || 'Server failed to create order'); }
+        return d.id;
+      });
     },
     onApprove: function (data) {
       return fetch(API_BASE + '/api/capture-paypal-order', {

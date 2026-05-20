@@ -139,6 +139,15 @@ app.get('/api/config', (req, res) => {
   });
 });
 
+app.get('/api/debug-paypal', async (req, res) => {
+  try {
+    const token = await getPayPalAccessToken();
+    res.json({ success: true, mode: PAYPAL_MODE, api: PAYPAL_API, token_prefix: token.substring(0, 10) + '...' });
+  } catch (e) {
+    res.json({ success: false, error: e.message, mode: PAYPAL_MODE, api: PAYPAL_API, client_id_prefix: PAYPAL_CLIENT_ID.substring(0, 10) + '...' });
+  }
+});
+
 app.get('/api/products', (req, res) => {
   try {
     const rows = db.prepare(`SELECT p.*, f.original_name as file_name, f.stored_name, f.id as file_id
@@ -206,7 +215,7 @@ app.post('/api/create-paypal-order', async (req, res) => {
       })
     });
     const order = await ppRes.json();
-    if (!order.id) return res.status(500).json({ error: 'PayPal order creation failed' });
+    if (!order.id) return res.status(500).json({ error: 'PayPal order creation failed', detail: order.message || order.name || JSON.stringify(order) });
     res.json({ id: order.id });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
