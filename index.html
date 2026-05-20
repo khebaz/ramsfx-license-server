@@ -167,7 +167,7 @@ select option{background:var(--dark3)}
     <div class="product-grid" id="product-grid"></div>
     <div class="trust-bar">
       <div class="trust-item"><i class="ti ti-shield-lock"></i><div><div class="trust-title">Account-bound license</div><div class="trust-sub">Tied to your MT5 account — cannot be shared</div></div></div>
-      <div class="trust-item"><i class="ti ti-credit-card"></i><div><div class="trust-title">Stripe</div><div class="trust-sub">Instant payment, instant delivery</div></div></div>
+      <div class="trust-item"><i class="ti ti-credit-card"></i><div><div class="trust-title">PayPal</div><div class="trust-sub">Instant payment, instant delivery</div></div></div>
       <div class="trust-item"><i class="ti ti-download"></i><div><div class="trust-title">Instant download</div><div class="trust-sub">Unique .ex5 after payment</div></div></div>
       <div class="trust-item"><i class="ti ti-headset"></i><div><div class="trust-title">Support</div><div class="trust-sub">Email support with your license</div></div></div>
     </div>
@@ -229,10 +229,10 @@ select option{background:var(--dark3)}
         <div class="os-row total"><span class="os-label">Total</span><span class="os-val gold" id="co2-price">—</span></div>
       </div>
       <div class="card" style="margin-bottom:20px">
-        <div class="tag" style="margin-bottom:14px">Step 2 — Pay securely with card</div>
+        <div class="tag" style="margin-bottom:14px">Step 2 — Pay securely with PayPal</div>
         <div id="paypal-button-container"></div>
         <div style="text-align:center;margin-top:10px;font-size:11px;color:var(--muted)">
-          <i class="ti ti-shield-check"></i> Secure checkout via Stripe · Instant delivery after payment
+          <i class="ti ti-shield-check"></i> Secure checkout · Instant delivery after payment
         </div>
       </div>
       <button class="btn btn-outline" style="width:100%;justify-content:center" onclick="goBackStep2()"><i class="ti ti-arrow-left"></i> Go back</button>
@@ -408,7 +408,7 @@ function goBackStep2() {
   document.getElementById('co-step1').style.display = '';
 }
 
-function renderStripeButton() {
+function renderButton() {
   if (buttonRendered) return;
   var container = document.getElementById('paypal-button-container');
   if (!container) return;
