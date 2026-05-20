@@ -143,7 +143,7 @@ app.get('/api/config', (req, res) => {
 app.get('/api/debug-paypal', async (req, res) => {
   try {
     const token = await getPayPalAccessToken();
-    res.json({ success: true, mode: PAYPAL_MODE, api: PAYPAL_API, token_prefix: token.substring(0, 10) + '...' });
+    res.json({ success: true, mode: PAYPAL_MODE, api: PAYPAL_API, token_prefix: token.substring(0, 10) + '...', payee_email_configured: !!PAYPAL_PAYEE_EMAIL, payee_email: PAYPAL_PAYEE_EMAIL || '(not set)' });
   } catch (e) {
     res.json({ success: false, error: e.message, mode: PAYPAL_MODE, api: PAYPAL_API, client_id_prefix: PAYPAL_CLIENT_ID.substring(0, 10) + '...', secret_prefix: PAYPAL_SECRET.substring(0, 5) + '...' });
   }
