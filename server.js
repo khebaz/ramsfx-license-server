@@ -18,6 +18,7 @@ const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID || 'sb';
 const PAYPAL_SECRET = process.env.PAYPAL_SECRET || 'sb';
 const PAYPAL_MODE = process.env.PAYPAL_MODE || (PAYPAL_CLIENT_ID === 'sb' ? 'sandbox' : 'live');
 const PAYPAL_API = PAYPAL_MODE === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
+const PAYPAL_PAYEE_EMAIL = process.env.PAYPAL_PAYEE_EMAIL || '';
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
 
 if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
@@ -151,10 +152,9 @@ app.get('/api/debug-paypal', async (req, res) => {
 app.post('/api/debug-create-order', async (req, res) => {
   try {
     const token = await getPayPalAccessToken();
-    const testBody = {
-      intent: 'CAPTURE',
-      purchase_units: [{ amount: { currency_code: 'USD', value: '5.00' }, description: 'Debug test' }]
-    };
+    const testUnit = { amount: { currency_code: 'USD', value: '5.00' }, description: 'Debug test' };
+    if (PAYPAL_PAYEE_EMAIL) testUnit.payee = { email_address: PAYPAL_PAYEE_EMAIL };
+    const testBody = { intent: 'CAPTURE', purchase_units: [testUnit] };
     const ppRes = await fetch(PAYPAL_API + '/v2/checkout/orders', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
@@ -225,16 +225,12 @@ app.post('/api/create-paypal-order', async (req, res) => {
     const product = db.prepare('SELECT * FROM products WHERE id = ? AND is_active = 1').get(product_id);
     if (!product) return res.status(404).json({ error: 'Product not found' });
     const token = await getPayPalAccessToken();
+    const purchaseUnit = { amount: { currency_code: 'USD', value: String(product.price) }, description: product.name };
+    if (PAYPAL_PAYEE_EMAIL) purchaseUnit.payee = { email_address: PAYPAL_PAYEE_EMAIL };
     const ppRes = await fetch(PAYPAL_API + '/v2/checkout/orders', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        intent: 'CAPTURE',
-        purchase_units: [{
-          amount: { currency_code: 'USD', value: String(product.price) },
-          description: product.name
-        }]
-      })
+      body: JSON.stringify({ intent: 'CAPTURE', purchase_units: [purchaseUnit] })
     });
     const order = await ppRes.json();
     if (!order.id) {

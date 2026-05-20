@@ -13,3 +13,5 @@ services:
         sync: false
       - key: PAYPAL_SECRET
         sync: false
+      - key: PAYPAL_PAYEE_EMAIL
+        sync: false
