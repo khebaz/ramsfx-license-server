@@ -239,7 +239,8 @@ app.post('/api/create-paypal-order', async (req, res) => {
     const order = await ppRes.json();
     if (!order.id) {
       console.error('PayPal create-order failed:', ppRes.status, JSON.stringify(order));
-      return res.status(500).json({ error: 'PayPal order creation failed', detail: order.message || order.name || JSON.stringify(order), paypal_debug: order.debug_id || null });
+      const detail = order.details ? order.details.map(d => d.issue + ': ' + d.description).join('; ') : (order.message || order.name || JSON.stringify(order));
+      return res.status(500).json({ error: 'PayPal order creation failed', detail, paypal_debug: order.debug_id || null });
     }
     res.json({ id: order.id });
   } catch (e) { res.status(500).json({ error: e.message }); }
