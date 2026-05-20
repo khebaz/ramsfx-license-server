@@ -7,11 +7,7 @@ services:
     envVars:
       - key: JWT_SECRET
         generateValue: true
-      - key: PAYPAL_MODE
-        value: live
-      - key: PAYPAL_CLIENT_ID
+      - key: STRIPE_PUBLISHABLE_KEY
         sync: false
-      - key: PAYPAL_SECRET
-        sync: false
-      - key: PAYPAL_PAYEE_EMAIL
+      - key: STRIPE_SECRET_KEY
         sync: false

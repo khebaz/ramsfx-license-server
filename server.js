@@ -10,15 +10,14 @@ const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const Stripe = require('stripe');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'ramsfx_jwt_secret_change_in_production';
-const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID || 'sb';
-const PAYPAL_SECRET = process.env.PAYPAL_SECRET || 'sb';
-const PAYPAL_MODE = process.env.PAYPAL_MODE || (PAYPAL_CLIENT_ID === 'sb' ? 'sandbox' : 'live');
-const PAYPAL_API = PAYPAL_MODE === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
-const PAYPAL_PAYEE_EMAIL = process.env.PAYPAL_PAYEE_EMAIL || '';
+const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || '';
+const STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_PUBLISHABLE_KEY || '';
+const stripe = STRIPE_SECRET_KEY ? Stripe(STRIPE_SECRET_KEY) : null;
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
 
 if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
@@ -134,37 +133,67 @@ app.get('/api/config', (req, res) => {
   const host = req.get('host') || '';
   const isLocal = host.includes('localhost') || host.includes('127.0.0.1');
   res.json({
-    paypal_client_id: PAYPAL_CLIENT_ID,
-    paypal_mode: PAYPAL_MODE,
+    stripe_publishable_key: STRIPE_PUBLISHABLE_KEY,
+    stripe_configured: !!stripe,
     is_local: isLocal
   });
 });
 
-app.get('/api/debug-paypal', async (req, res) => {
+app.post('/api/create-checkout-session', async (req, res) => {
+  const { product_id, account_1, account_2, email } = req.body;
+  if (!stripe) return res.status(500).json({ error: 'Stripe not configured' });
+  if (!product_id || !account_1 || !email) return res.status(400).json({ error: 'Missing fields' });
   try {
-    const token = await getPayPalAccessToken();
-    res.json({ success: true, mode: PAYPAL_MODE, api: PAYPAL_API, token_prefix: token.substring(0, 10) + '...', payee_email_configured: !!PAYPAL_PAYEE_EMAIL, payee_email: PAYPAL_PAYEE_EMAIL || '(not set)' });
-  } catch (e) {
-    res.json({ success: false, error: e.message, mode: PAYPAL_MODE, api: PAYPAL_API, client_id_prefix: PAYPAL_CLIENT_ID.substring(0, 10) + '...', secret_prefix: PAYPAL_SECRET.substring(0, 5) + '...' });
-  }
+    const product = db.prepare('SELECT * FROM products WHERE id = ? AND is_active = 1').get(product_id);
+    if (!product) return res.status(404).json({ error: 'Product not found' });
+    const origin = req.headers.origin || 'http://localhost:3000';
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      payment_method_types: ['card'],
+      line_items: [{
+        price_data: {
+          currency: 'usd',
+          product_data: { name: product.name, description: product.description },
+          unit_amount: product.price * 100
+        },
+        quantity: 1
+      }],
+      metadata: { product_id: String(product.id), account_1, account_2: account_2 || '', email },
+      success_url: origin + '/?session_id={CHECKOUT_SESSION_ID}',
+      cancel_url: origin + '/'
+    });
+    res.json({ url: session.url, session_id: session.id });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.post('/api/debug-create-order', async (req, res) => {
+app.post('/api/verify-checkout-session', async (req, res) => {
+  const { session_id } = req.body;
+  if (!session_id) return res.status(400).json({ error: 'Missing session_id' });
   try {
-    const token = await getPayPalAccessToken();
-    const testUnit = { amount: { currency_code: 'USD', value: '5.00' }, description: 'Debug test' };
-    if (PAYPAL_PAYEE_EMAIL) testUnit.payee = { email_address: PAYPAL_PAYEE_EMAIL };
-    const testBody = { intent: 'CAPTURE', purchase_units: [testUnit] };
-    const ppRes = await fetch(PAYPAL_API + '/v2/checkout/orders', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-      body: JSON.stringify(testBody)
+    const existing = db.prepare('SELECT id FROM orders WHERE paypal_order_id = ?').get(session_id);
+    if (existing) {
+      const lic = db.prepare('SELECT license_key FROM licenses WHERE id = (SELECT license_id FROM orders WHERE id = ?)').get(existing.id);
+      const file = db.prepare('SELECT * FROM ea_files WHERE product_id = (SELECT product_id FROM orders WHERE id = ?) AND is_active = 1 ORDER BY created_at DESC LIMIT 1').get(existing.id);
+      return res.json({ success: true, license_key: lic.license_key, download_url: file ? '/uploads/' + file.stored_name : null, file_name: file ? file.original_name : null });
+    }
+    const session = await stripe.checkout.sessions.retrieve(session_id);
+    if (session.payment_status !== 'paid') return res.status(400).json({ error: 'Payment not completed' });
+    const meta = session.metadata;
+    const product_id = Number(meta.product_id);
+    const product = db.prepare('SELECT price FROM products WHERE id = ?').get(product_id);
+    if (!product) return res.status(404).json({ error: 'Product not found' });
+    const key = generateLicenseKey();
+    const on = orderNumber();
+    const licResult = db.prepare('INSERT INTO licenses (license_key, product_id, account_1, account_2, email) VALUES (?, ?, ?, ?, ?)').run(key, product_id, meta.account_1, meta.account_2 || null, meta.email);
+    db.prepare(`INSERT INTO orders (order_number, product_id, customer_email, account_1, account_2, payment_method, amount, paypal_order_id, status, license_id)
+      VALUES (?, ?, ?, ?, ?, 'Stripe', ?, ?, 'Complete', ?)`).run(on, product_id, meta.email, meta.account_1, meta.account_2 || null, product.price, session_id, licResult.lastInsertRowid);
+    const file = db.prepare('SELECT * FROM ea_files WHERE product_id = ? AND is_active = 1 ORDER BY created_at DESC LIMIT 1').get(product_id);
+    res.json({
+      success: true, license_key: key, order_number: on,
+      download_url: file ? '/uploads/' + file.stored_name : null,
+      file_name: file ? file.original_name : null
     });
-    const order = await ppRes.json();
-    res.json({ status: ppRes.status, sent: testBody, received: order });
-  } catch (e) {
-    res.json({ error: e.message });
-  }
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.get('/api/products', (req, res) => {
@@ -199,76 +228,9 @@ app.post('/api/activate', (req, res) => {
     const licResult = db.prepare('INSERT INTO licenses (license_key, product_id, account_1, account_2, email) VALUES (?, ?, ?, ?, ?)').run(key, product_id, account_1, account_2 || null, email);
     const product = db.prepare('SELECT price FROM products WHERE id = ?').get(product_id);
     db.prepare(`INSERT INTO orders (order_number, product_id, customer_email, account_1, account_2, payment_method, amount, status, license_id)
-      VALUES (?, ?, ?, ?, ?, 'PayPal', ?, 'Complete', ?)`).run(on, product_id, email, account_1, account_2 || null, product ? product.price : 0, licResult.lastInsertRowid);
+      VALUES (?, ?, ?, ?, ?, 'Stripe', ?, 'Complete', ?)`).run(on, product_id, email, account_1, account_2 || null, product ? product.price : 0, licResult.lastInsertRowid);
     res.json({ success: true, license_key: key, order_number: on });
   } catch (e) { res.json({ success: false, message: e.message }); }
-});
-
-async function getPayPalAccessToken() {
-  const basic = Buffer.from(PAYPAL_CLIENT_ID + ':' + PAYPAL_SECRET).toString('base64');
-    const res = await fetch(PAYPAL_API + '/v1/oauth2/token', {
-    method: 'POST',
-    headers: { 'Authorization': 'Basic ' + basic, 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: 'grant_type=client_credentials'
-  });
-  const data = await res.json();
-  if (!data.access_token) {
-    console.error('PayPal auth failed:', JSON.stringify(data));
-    throw new Error('PayPal auth failed: ' + (data.error_description || data.error || 'unknown'));
-  }
-  return data.access_token;
-}
-
-app.post('/api/create-paypal-order', async (req, res) => {
-  const { product_id, account_1, account_2, email } = req.body;
-  try {
-    const product = db.prepare('SELECT * FROM products WHERE id = ? AND is_active = 1').get(product_id);
-    if (!product) return res.status(404).json({ error: 'Product not found' });
-    const token = await getPayPalAccessToken();
-    const purchaseUnit = { amount: { currency_code: 'USD', value: String(product.price) }, description: product.name };
-    if (PAYPAL_PAYEE_EMAIL) purchaseUnit.payee = { email_address: PAYPAL_PAYEE_EMAIL };
-    const ppRes = await fetch(PAYPAL_API + '/v2/checkout/orders', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ intent: 'CAPTURE', purchase_units: [purchaseUnit] })
-    });
-    const order = await ppRes.json();
-    if (!order.id) {
-      console.error('PayPal create-order failed:', ppRes.status, JSON.stringify(order));
-      const detail = order.details ? order.details.map(d => d.issue + ': ' + d.description).join('; ') : (order.message || order.name || JSON.stringify(order));
-      return res.status(500).json({ error: 'PayPal order creation failed', detail, paypal_debug: order.debug_id || null });
-    }
-    res.json({ id: order.id });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-app.post('/api/capture-paypal-order', async (req, res) => {
-  const { paypal_order_id, product_id, account_1, account_2, email } = req.body;
-  if (!paypal_order_id || !product_id || !account_1 || !email) return res.status(400).json({ error: 'Missing fields' });
-  try {
-    const token = await getPayPalAccessToken();
-    const ppRes = await fetch(PAYPAL_API + '/v2/checkout/orders/' + paypal_order_id + '/capture', {
-      method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
-    });
-    const capture = await ppRes.json();
-    if (capture.status !== 'COMPLETED') return res.status(400).json({ error: 'PayPal capture failed: ' + (capture.status || 'unknown') });
-    const product = db.prepare('SELECT price FROM products WHERE id = ?').get(product_id);
-    if (!product) return res.status(404).json({ error: 'Product not found' });
-    const key = generateLicenseKey();
-    const on = orderNumber();
-    const licResult = db.prepare('INSERT INTO licenses (license_key, product_id, account_1, account_2, email) VALUES (?, ?, ?, ?, ?)').run(key, product_id, account_1, account_2 || null, email);
-    db.prepare(`INSERT INTO orders (order_number, product_id, customer_email, account_1, account_2, payment_method, amount, paypal_order_id, status, license_id)
-      VALUES (?, ?, ?, ?, ?, 'PayPal', ?, ?, 'Complete', ?)`).run(on, product_id, email, account_1, account_2 || null, product.price, paypal_order_id, licResult.lastInsertRowid);
-    const file = db.prepare('SELECT * FROM ea_files WHERE product_id = ? AND is_active = 1 ORDER BY created_at DESC LIMIT 1').get(product_id);
-    res.json({
-      success: true,
-      license_key: key,
-      order_number: on,
-      download_url: file ? '/uploads/' + file.stored_name : null,
-      file_name: file ? file.original_name : null
-    });
-  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.post('/api/test-payment', (req, res) => {
@@ -448,4 +410,6 @@ app.listen(PORT, () => {
   console.log(`Rams FX server running on http://localhost:${PORT}`);
   console.log(`Admin dashboard: http://localhost:${PORT}/admin`);
   console.log(`Default login: admin / admin123`);
+  if (stripe) console.log('Stripe: configured');
+  else console.log('Stripe: NOT configured (set STRIPE_SECRET_KEY)');
 });

@@ -708,7 +708,7 @@ function viewOrder(id) {
       '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px"><span style="color:var(--muted2)">Product</span><span>' + o.product_name + '</span></div>' +
       '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px"><span style="color:var(--muted2)">Customer</span><span class="mono">' + o.customer_email + '</span></div>' +
       '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px"><span style="color:var(--muted2)">Accounts</span><span class="mono">' + (o.account_1 || '') + (o.account_2 ? ', ' + o.account_2 : '') + '</span></div>' +
-      '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px"><span style="color:var(--muted2)">Payment</span><span>' + (o.payment_method || 'PayPal') + '</span></div>' +
+      '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px"><span style="color:var(--muted2)">Payment</span><span>' + (o.payment_method || 'Stripe') + '</span></div>' +
       '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;border-top:0.5px solid var(--border);margin-top:8px;padding-top:10px;font-weight:500"><span style="color:var(--muted2)">Amount</span><span style="color:var(--gold);font-weight:700">$' + (o.amount || 0) + '</span></div>' +
       '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px"><span style="color:var(--muted2)">Status</span><span class="badge ' + (sc[o.status] || 'badge-muted') + '">' + o.status + '</span></div>' +
       '</div>';
