@@ -270,8 +270,7 @@ select option{background:var(--dark3)}
 var API_BASE = window.location.origin;
 var PRODUCTS = [];
 var curProduct = null, curPrice = 0, curAcct1 = '', curAcct2 = '', curEmail = '';
-var stripeButtonRendered = false;
-var stripeConfigured = false;
+var paypalLinks = {};
 
 // TOAST
 function toast(msg, type, icon) {
@@ -300,7 +299,7 @@ function showPage(p) {
     var pages = ['store', 'checkout'];
     if (pages[i] === p) t.classList.add('active');
   });
-  if (p === 'checkout' && curProduct) renderStripeButton();
+  if (p === 'checkout' && curProduct) renderButton();
 }
 
 // LOAD PRODUCTS + CONFIG
@@ -320,34 +319,35 @@ window.addEventListener('DOMContentLoaded', function () {
   fetch(API_BASE + '/api/config')
     .then(function (r) { return r.json(); })
     .then(function (cfg) {
-      stripeConfigured = cfg.stripe_configured;
+      paypalLinks = cfg.paypal_links || {};
     });
-  var params = new URLSearchParams(window.location.search);
-  var sessionId = params.get('session_id');
-  if (sessionId) {
-    document.querySelector('#page-store .hero h1').textContent = 'Completing payment...';
-    verifySession(sessionId);
+  var pending = sessionStorage.getItem('pp_pending');
+  if (pending) {
+    sessionStorage.removeItem('pp_pending');
+    try {
+      var data = JSON.parse(pending);
+      document.querySelector('#page-store .hero h1').textContent = 'Completing payment...';
+      fetch(API_BASE + '/api/complete-paypal-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: data.token })
+      }).then(function (r) { return r.json(); }).then(function (result) {
+        if (result.success) {
+          curProduct = data.product;
+          curAcct1 = data.acct1;
+          curAcct2 = data.acct2;
+          curEmail = data.email;
+          showPage('checkout');
+          showDownload(result);
+        } else {
+          toast('Payment completion failed: ' + (result.error || 'Unknown'), 'danger', 'ti-alert-circle');
+        }
+      }).catch(function () {
+        toast('Payment completion error', 'danger', 'ti-alert-circle');
+      });
+    } catch(e) { toast('Error processing return', 'danger', 'ti-alert-circle'); }
   }
 });
-
-function verifySession(sessionId) {
-  fetch(API_BASE + '/api/verify-checkout-session', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ session_id: sessionId })
-  }).then(function (r) { return r.json(); }).then(function (result) {
-    if (result.success) {
-      showDownload(result);
-      window.history.replaceState({}, document.title, '/');
-    } else {
-      toast('Payment verification failed: ' + (result.error || 'Unknown'), 'danger', 'ti-alert-circle');
-      window.history.replaceState({}, document.title, '/');
-    }
-  }).catch(function () {
-    toast('Payment verification error', 'danger', 'ti-alert-circle');
-    window.history.replaceState({}, document.title, '/');
-  });
-}
 
 // RENDER PRODUCTS
 function renderProducts() {
@@ -379,7 +379,7 @@ function startCheckout(productId) {
   document.getElementById('acct1').value = '';
   document.getElementById('acct2').value = '';
   document.getElementById('buyer-email').value = '';
-  stripeButtonRendered = false;
+  buttonRendered = false;
   showPage('checkout');
   ['co-step1', 'co-step2', 'co-step3'].forEach(function (id, i) {
     document.getElementById(id).style.display = i === 0 ? '' : 'none';
@@ -400,7 +400,7 @@ function goToStep2() {
   document.getElementById('co-step1').style.display = 'none';
   document.getElementById('co-step2').style.display = '';
   window.scrollTo({ top: 0, behavior: 'smooth' });
-  setTimeout(function () { renderStripeButton(); }, 100);
+  setTimeout(function () { renderButton(); }, 100);
 }
 
 function goBackStep2() {
@@ -409,7 +409,7 @@ function goBackStep2() {
 }
 
 function renderStripeButton() {
-  if (stripeButtonRendered) return;
+  if (buttonRendered) return;
   var container = document.getElementById('paypal-button-container');
   if (!container) return;
   container.innerHTML = '';
@@ -420,29 +420,46 @@ function renderStripeButton() {
       '<i class="ti ti-flask"></i> Local mode — test payment below</div>' +
       '<button class="btn btn-gold" style="width:100%;padding:14px;font-size:14px;justify-content:center" onclick="testPayment()">' +
       '<i class="ti ti-check"></i> Complete test payment</button>';
-    stripeButtonRendered = true;
+    buttonRendered = true;
+    return;
+  }
+  var link = paypalLinks[String(curProduct.id)];
+  if (!link) {
+    container.innerHTML = '<p style="color:var(--danger);font-size:13px;text-align:center">Payment not available for this product</p>';
+    buttonRendered = true;
     return;
   }
   container.innerHTML =
-    '<button class="btn btn-gold stripe-btn" style="width:100%;padding:14px;font-size:14px;justify-content:center" onclick="stripeCheckout()">' +
-    '<svg style="width:18px;height:18px;margin-right:8px" viewBox="0 0 24 24" fill="currentColor"><path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 1.672 0 2.934.671 3.997 1.547l1.518-2.17C16.152 3.597 14.182 3 12.145 3 8.42 3 5.97 5.017 5.97 8.074c0 3.197 2.305 4.634 5.413 5.618 2.462.794 3.402 1.528 3.402 2.553 0 .813-.707 1.442-2.141 1.442-1.717 0-3.24-.834-4.364-1.861l-1.575 2.276C8.801 19.555 10.966 21 13.627 21c4.045 0 6.403-2.18 6.403-5.373 0-3.536-2.221-4.936-6.054-6.477z"/></svg>' +
-    'Pay $' + curPrice + ' with Card</button>';
-  stripeButtonRendered = true;
+    '<button class="btn btn-gold pp-btn" style="width:100%;padding:14px;font-size:14px;justify-content:center" onclick="paypalLinkCheckout()">' +
+    '<svg style="width:18px;height:18px;margin-right:8px" viewBox="0 0 24 24" fill="currentColor"><path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797H9.112c-.49 0-.905.354-.982.836l-1.054 6.67v.5z"/><path d="M22.174 5.178c-.664 4.114-3.493 6.79-7.044 7.068-1.134.09-2.124.136-3.118.136H9.112c-.49 0-.905.354-.982.836l-1.054 6.67c-.123.78-.76 1.34-1.54 1.34H2.47c-.32 0-.594-.13-.77-.352a1.023 1.023 0 0 1-.184-.822l.057-.352h.004c.123-.78.76-1.34 1.54-1.34h2.9c.49 0 .905-.354.982-.836l1.054-6.67c.077-.482.491-.836.982-.836h2.9c4.298 0 7.664-1.748 8.647-6.797.077-.386.123-.74.164-1.07.35-2.483-.34-4.077-2.227-5.256 1.614.694 2.687 2.064 2.31 4.527z"/></svg>' +
+    'Pay $' + curPrice + ' with PayPal</button>';
+  buttonRendered = true;
 }
 
-function stripeCheckout() {
-  var btn = document.querySelector('.stripe-btn');
-  if (btn) { btn.textContent = 'Redirecting...'; btn.disabled = true; }
-  fetch(API_BASE + '/api/create-checkout-session', {
+function paypalLinkCheckout() {
+  var btn = document.querySelector('.pp-btn');
+  if (btn) { btn.textContent = 'Redirecting to PayPal...'; btn.disabled = true; }
+  fetch(API_BASE + '/api/init-paypal-order', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ product_id: curProduct.id, account_1: curAcct1, account_2: curAcct2, email: curEmail })
   }).then(function (r) { return r.json(); }).then(function (result) {
-    if (result.url) { window.location.href = result.url; }
-    else { toast('Checkout error: ' + (result.error || 'Unknown'), 'danger', 'ti-alert-circle'); if (btn) { btn.textContent = 'Pay with Card'; btn.disabled = false; } }
+    if (result.url) {
+      sessionStorage.setItem('pp_pending', JSON.stringify({
+        token: result.token,
+        product: curProduct,
+        acct1: curAcct1,
+        acct2: curAcct2,
+        email: curEmail
+      }));
+      window.location.href = result.url;
+    } else {
+      toast('Error: ' + (result.error || 'Unknown'), 'danger', 'ti-alert-circle');
+      if (btn) { btn.textContent = 'Pay with PayPal'; btn.disabled = false; }
+    }
   }).catch(function () {
     toast('Checkout error', 'danger', 'ti-alert-circle');
-    if (btn) { btn.textContent = 'Pay with Card'; btn.disabled = false; }
+    if (btn) { btn.textContent = 'Pay with PayPal'; btn.disabled = false; }
   });
 }
 
@@ -454,7 +471,7 @@ function testPayment() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ product_id: curProduct.id, account_1: curAcct1, account_2: curAcct2, email: curEmail })
   }).then(function (r) { return r.json(); }).then(function (result) {
-    if (result.success) { stripeButtonRendered = true; showDownload(result); }
+    if (result.success) { buttonRendered = true; showDownload(result); }
     else { toast('Test payment failed', 'danger', 'ti-alert-circle'); if (btn) { btn.textContent = 'Complete test payment'; btn.disabled = false; } }
   }).catch(function () {
     toast('Test payment error', 'danger', 'ti-alert-circle');

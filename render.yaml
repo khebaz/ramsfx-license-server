@@ -7,7 +7,5 @@ services:
     envVars:
       - key: JWT_SECRET
         generateValue: true
-      - key: STRIPE_PUBLISHABLE_KEY
-        sync: false
-      - key: STRIPE_SECRET_KEY
+      - key: PAYPAL_LINKS
         sync: false
