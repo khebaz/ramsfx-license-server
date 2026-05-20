@@ -14,10 +14,10 @@ const jwt = require('jsonwebtoken');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'ramsfx_jwt_secret_change_in_production';
-const PAYPAL_MODE = process.env.PAYPAL_MODE || 'sandbox';
+const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID || 'sb';
+const PAYPAL_SECRET = process.env.PAYPAL_SECRET || 'sb';
+const PAYPAL_MODE = process.env.PAYPAL_MODE || (PAYPAL_CLIENT_ID === 'sb' ? 'sandbox' : 'live');
 const PAYPAL_API = PAYPAL_MODE === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
-const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID || (PAYPAL_MODE === 'live' ? 'AfL6diQgCckVQG0cRi4aAlbBrdncVk2TGXL79wNEjeVdy85NSrfVI9xrVBS-CboRg3i0mnportB0s7OJ' : 'sb');
-const PAYPAL_SECRET = process.env.PAYPAL_SECRET || (PAYPAL_MODE === 'live' ? 'EMShKGfH_jwCBRf9ovJE7Y-HIZ6JzoTqY5V94VTSH4CLago77FfxbXIozcU-Rj9IgOf27vexzJRXKMW9' : 'sb');
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
 
 if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
@@ -134,7 +134,7 @@ app.get('/api/config', (req, res) => {
   const isLocal = host.includes('localhost') || host.includes('127.0.0.1');
   res.json({
     paypal_client_id: PAYPAL_CLIENT_ID,
-    paypal_mode: isLocal ? 'sandbox' : PAYPAL_MODE,
+    paypal_mode: PAYPAL_MODE,
     is_local: isLocal
   });
 });
