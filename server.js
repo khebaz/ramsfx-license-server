@@ -144,7 +144,7 @@ app.get('/api/debug-paypal', async (req, res) => {
     const token = await getPayPalAccessToken();
     res.json({ success: true, mode: PAYPAL_MODE, api: PAYPAL_API, token_prefix: token.substring(0, 10) + '...' });
   } catch (e) {
-    res.json({ success: false, error: e.message, mode: PAYPAL_MODE, api: PAYPAL_API, client_id_prefix: PAYPAL_CLIENT_ID.substring(0, 10) + '...' });
+    res.json({ success: false, error: e.message, mode: PAYPAL_MODE, api: PAYPAL_API, client_id_prefix: PAYPAL_CLIENT_ID.substring(0, 10) + '...', secret_prefix: PAYPAL_SECRET.substring(0, 5) + '...' });
   }
 });
 
@@ -193,7 +193,10 @@ async function getPayPalAccessToken() {
     body: 'grant_type=client_credentials'
   });
   const data = await res.json();
-  if (!data.access_token) throw new Error('PayPal auth failed');
+  if (!data.access_token) {
+    console.error('PayPal auth failed:', JSON.stringify(data));
+    throw new Error('PayPal auth failed: ' + (data.error_description || data.error || 'unknown'));
+  }
   return data.access_token;
 }
 
