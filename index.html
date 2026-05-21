@@ -186,7 +186,14 @@ select option{background:var(--dark3)}
         <div class="step"><span class="step-num">03</span><span class="step-label">Download</span></div>
       </div>
       <div class="order-summary">
-        <div class="os-row"><span class="os-label">Product</span><span class="os-val" id="co-product-name">—</span></div>
+        <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:10px;padding-bottom:12px;border-bottom:0.5px solid var(--border)">
+          <div style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--gold),#c8962e);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;color:#fff;flex-shrink:0" id="co-icon">FX</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:14px;font-weight:500;margin-bottom:2px" id="co-product-name">—</div>
+            <div style="font-size:11px;color:var(--muted2);line-height:1.4" id="co-desc"></div>
+          </div>
+          <div style="font-size:15px;font-weight:600;color:var(--gold);white-space:nowrap" id="co-price-display"></div>
+        </div>
         <div class="os-row"><span class="os-label">License</span><span class="os-val">Lifetime · 2 accounts</span></div>
         <div class="os-row total"><span class="os-label">Total</span><span class="os-val gold" id="co-product-price">—</span></div>
       </div>
@@ -223,9 +230,18 @@ select option{background:var(--dark3)}
         <div class="step"><span class="step-num">03</span><span class="step-label">Download</span></div>
       </div>
       <div class="order-summary">
-        <div class="os-row"><span class="os-label">Product</span><span class="os-val" id="co2-product">—</span></div>
+        <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:14px;padding-bottom:14px;border-bottom:0.5px solid var(--border)">
+          <div style="width:48px;height:48px;border-radius:10px;background:linear-gradient(135deg,var(--gold),#c8962e);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:600;color:#fff;flex-shrink:0" id="co2-icon">FX</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:15px;font-weight:500;margin-bottom:3px" id="co2-product">—</div>
+            <div style="font-size:11px;color:var(--muted2);line-height:1.4" id="co2-desc"></div>
+          </div>
+          <div style="font-size:16px;font-weight:600;color:var(--gold);white-space:nowrap" id="co2-price-display"></div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px" id="co2-badges"></div>
         <div class="os-row"><span class="os-label">Account #1</span><span class="os-val mono" id="co2-acct1">—</span></div>
         <div class="os-row"><span class="os-label">Account #2</span><span class="os-val mono" id="co2-acct2">Not added</span></div>
+        <div class="os-row"><span class="os-label">License</span><span class="os-val">Lifetime · 2 accounts</span></div>
         <div class="os-row total"><span class="os-label">Total</span><span class="os-val gold" id="co2-price">—</span></div>
       </div>
       <div class="card" style="margin-bottom:20px">
@@ -375,6 +391,9 @@ function startCheckout(productId) {
   if (!p) { toast('Product not found', 'danger', 'ti-alert-circle'); return; }
   curProduct = p; curPrice = p.price;
   document.getElementById('co-product-name').textContent = p.name;
+  document.getElementById('co-desc').textContent = p.description || '';
+  document.getElementById('co-price-display').textContent = '$' + p.price;
+  document.getElementById('co-icon').textContent = (p.name || 'EA').split(' ').map(function(w){return w[0]}).join('').slice(0,2);
   document.getElementById('co-product-price').textContent = '$' + p.price;
   document.getElementById('acct1').value = '';
   document.getElementById('acct2').value = '';
@@ -394,9 +413,22 @@ function goToStep2() {
   if (!em || em.indexOf('@') < 0) { toast('Enter a valid email address', 'danger', 'ti-alert-circle'); return; }
   curAcct1 = a1; curAcct2 = document.getElementById('acct2').value.trim(); curEmail = em;
   document.getElementById('co2-product').textContent = curProduct.name;
+  document.getElementById('co2-desc').textContent = curProduct.description || '';
+  document.getElementById('co2-price-display').textContent = '$' + curPrice;
+  document.getElementById('co2-icon').textContent = (curProduct.name || 'EA').split(' ').map(function(w){return w[0]}).join('').slice(0,2);
   document.getElementById('co2-acct1').textContent = curAcct1;
   document.getElementById('co2-acct2').textContent = curAcct2 || 'Not added';
   document.getElementById('co2-price').textContent = '$' + curPrice;
+  var badgesEl = document.getElementById('co2-badges');
+  badgesEl.innerHTML = '';
+  if (curProduct.features && Array.isArray(curProduct.features)) {
+    curProduct.features.slice(0, 4).forEach(function(f) {
+      var b = document.createElement('span');
+      b.style.cssText = 'font-size:10px;padding:3px 8px;border-radius:4px;background:rgba(201,168,76,.1);color:var(--gold);border:0.5px solid rgba(201,168,76,.2)';
+      b.textContent = f;
+      badgesEl.appendChild(b);
+    });
+  }
   document.getElementById('co-step1').style.display = 'none';
   document.getElementById('co-step2').style.display = '';
   window.scrollTo({ top: 0, behavior: 'smooth' });
