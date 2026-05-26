@@ -16,7 +16,7 @@ const PAYPAL_LINKS = (function () {
   try { return JSON.parse(process.env.PAYPAL_LINKS || '{}'); } catch { return {}; }
 })();
 
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
 
 app.use(cors());
 app.use(express.json());
@@ -385,6 +385,12 @@ app.post('/api/admin/orders/refund', auth, (req, res) => {
 
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
+
+app.use(function (err, req, res, next) {
+  if (err instanceof multer.MulterError) return res.status(400).json({ error: 'Upload error: ' + err.message });
+  if (err) return res.status(500).json({ error: err.message || 'Server error' });
+  next();
+});
 
 app.listen(PORT, () => {
   console.log(`Rams FX server running on http://localhost:${PORT}`);

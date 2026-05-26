@@ -566,8 +566,8 @@ function handleFileUpload(e) {
     body: fd
   }).then(function (r) { return r.json(); }).then(function (data) {
     if (data.success) { toast('Uploaded ' + file.name, 'success', 'ti-upload'); loadFiles(); }
-    else { toast('Upload failed', 'danger', 'ti-alert-circle'); }
-  }).catch(function () { toast('Upload failed', 'danger', 'ti-alert-circle'); });
+    else { toast('Upload failed: ' + (data.error || 'Server error'), 'danger', 'ti-alert-circle'); }
+  }).catch(function (err) { toast('Upload error', 'danger', 'ti-alert-circle'); });
   e.target.value = '';
 }
 
