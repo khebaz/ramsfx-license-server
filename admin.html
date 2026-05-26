@@ -43,6 +43,7 @@ select option{background:var(--dark3)}
 .status-dot.green{background:#2ecc9a;box-shadow:0 0 6px rgba(46,204,154,.5)}
 .status-dot.red{background:#e74c3c}
 .status-dot.amber{background:var(--gold)}
+.metric-value.amber{color:var(--gold)}
 
 /* LOGIN */
 .login-page{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}
@@ -200,6 +201,7 @@ select option{background:var(--dark3)}
           <div class="metric"><div class="metric-label">Total Revenue</div><div class="metric-value gold" id="stat-revenue">$0</div></div>
           <div class="metric"><div class="metric-label">Active Licenses</div><div class="metric-value green" id="stat-licenses">0</div></div>
           <div class="metric"><div class="metric-label">Total Orders</div><div class="metric-value" id="stat-orders">0</div></div>
+          <div class="metric"><div class="metric-label">Pending</div><div class="metric-value amber" id="stat-pending">0</div></div>
           <div class="metric"><div class="metric-label">Revoked</div><div class="metric-value red" id="stat-revoked">0</div></div>
         </div>
         <div class="panel-section">
@@ -453,6 +455,7 @@ function loadOverview() {
     $('stat-revenue').textContent = '$' + (s.revenue || 0).toLocaleString();
     $('stat-licenses').textContent = s.active_licenses || 0;
     $('stat-orders').textContent = s.total_orders || 0;
+    $('stat-pending').textContent = s.pending_orders || 0;
     $('stat-revoked').textContent = s.revoked || 0;
   });
   api('/api/admin/products').then(function (d) {

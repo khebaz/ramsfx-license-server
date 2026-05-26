@@ -2,34 +2,24 @@ require('dotenv').config();
 const express = require('express');
 const Database = require('better-sqlite3');
 const { v4: uuidv4 } = require('uuid');
-const bodyParser = require('body-parser');
-const crypto = require('crypto');
 const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'ramsfx_jwt_secret_change_in_production';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
 const PAYPAL_LINKS = (function () {
   try { return JSON.parse(process.env.PAYPAL_LINKS || '{}'); } catch { return {}; }
 })();
-const UPLOADS_DIR = path.join(__dirname, 'uploads');
 
-if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, UPLOADS_DIR),
-  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_'))
-});
-const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } });
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
 app.use(cors());
-app.use(bodyParser.json());
-app.use('/uploads', express.static(UPLOADS_DIR));
+app.use(express.json());
 app.use(express.static(__dirname));
 
 const db = new Database(path.join(__dirname, 'ramsfx.db'));
@@ -57,8 +47,9 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS ea_files (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     original_name TEXT NOT NULL,
-    stored_name TEXT NOT NULL,
+    stored_name TEXT,
     size INTEGER,
+    file_data BLOB,
     product_id INTEGER,
     is_active INTEGER DEFAULT 1,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -91,9 +82,13 @@ db.exec(`
 `);
 
 const adminCount = db.prepare('SELECT id FROM admins WHERE username = ?').get('admin');
-if (!adminCount) {
-  const hash = bcrypt.hashSync('admin123', 10);
-  db.prepare('INSERT INTO admins (username, password_hash) VALUES (?, ?)').run('admin', hash);
+if (ADMIN_PASSWORD) {
+  const hash = bcrypt.hashSync(ADMIN_PASSWORD, 10);
+  if (!adminCount) {
+    db.prepare('INSERT OR IGNORE INTO admins (username, password_hash) VALUES (?, ?)').run('admin', hash);
+  } else {
+    db.prepare('UPDATE admins SET password_hash = ? WHERE username = ?').run(hash, 'admin');
+  }
 }
 
 const productCount = db.prepare('SELECT id FROM products LIMIT 1').get();
@@ -164,7 +159,7 @@ app.post('/api/complete-paypal-order', (req, res) => {
     const file = db.prepare('SELECT * FROM ea_files WHERE product_id = ? AND is_active = 1 ORDER BY created_at DESC LIMIT 1').get(order.product_id);
     res.json({
       success: true, license_key: key, order_number: order.order_number,
-      download_url: file ? '/uploads/' + file.stored_name : null,
+      download_url: file ? '/api/download/' + file.id : null,
       file_name: file ? file.original_name : null
     });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -223,7 +218,7 @@ app.post('/api/test-payment', (req, res) => {
       success: true,
       license_key: key,
       order_number: on,
-      download_url: file ? '/uploads/' + file.stored_name : null,
+      download_url: file ? '/api/download/' + file.id : null,
       file_name: file ? file.original_name : null
     });
   } catch (e) { res.status(500).json({ error: e.message }); }
@@ -309,9 +304,12 @@ app.post('/api/admin/files/upload', auth, upload.single('file'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
   try {
     const productId = req.body.product_id || null;
-    const r = db.prepare('INSERT INTO ea_files (original_name, stored_name, size, product_id) VALUES (?, ?, ?, ?)').run(
-      req.file.originalname, req.file.filename, req.file.size, productId);
-    res.json({ success: true, id: Number(r.lastInsertRowid), file: req.file });
+    const r = db.prepare('INSERT INTO ea_files (original_name, stored_name, size, file_data, product_id) VALUES (?, ?, ?, ?, ?)').run(
+      req.file.originalname, req.file.originalname, req.file.size, req.file.buffer, productId);
+    if (productId) {
+      db.prepare('UPDATE products SET file_id = ? WHERE id = ?').run(Number(r.lastInsertRowid), productId);
+    }
+    res.json({ success: true, id: Number(r.lastInsertRowid), file: { originalname: req.file.originalname, size: req.file.size } });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -324,10 +322,18 @@ app.put('/api/admin/files/:id', auth, (req, res) => {
 
 app.delete('/api/admin/files/:id', auth, (req, res) => {
   try {
-    const file = db.prepare('SELECT stored_name FROM ea_files WHERE id = ?').get(req.params.id);
-    if (file) { const p = path.join(UPLOADS_DIR, file.stored_name); if (fs.existsSync(p)) fs.unlinkSync(p); }
     db.prepare('DELETE FROM ea_files WHERE id = ?').run(req.params.id);
     res.json({ success: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/download/:id', (req, res) => {
+  try {
+    const file = db.prepare('SELECT * FROM ea_files WHERE id = ? AND is_active = 1').get(req.params.id);
+    if (!file || !file.file_data) return res.status(404).json({ error: 'File not found' });
+    res.setHeader('Content-Disposition', 'attachment; filename="' + file.original_name + '"');
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.send(file.file_data);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -383,7 +389,8 @@ app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'admin.html'))
 app.listen(PORT, () => {
   console.log(`Rams FX server running on http://localhost:${PORT}`);
   console.log(`Admin dashboard: http://localhost:${PORT}/admin`);
-  console.log(`Default login: admin / admin123`);
+  if (ADMIN_PASSWORD) console.log('Admin: configured');
+  else console.log('Admin: NOT configured (set ADMIN_PASSWORD env var)');
   const linkCount = Object.keys(PAYPAL_LINKS).length;
   if (linkCount > 0) console.log('PayPal links: ' + linkCount + ' configured');
   else console.log('PayPal links: none configured (set PAYPAL_LINKS env var)');
