@@ -80,6 +80,8 @@ db.exec(`
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 `);
+try { db.exec('ALTER TABLE ea_files ADD COLUMN file_data BLOB'); } catch {}
+try { db.exec('ALTER TABLE ea_files ADD COLUMN stored_name TEXT'); } catch {}
 
 const adminCount = db.prepare('SELECT id FROM admins WHERE username = ?').get('admin');
 if (ADMIN_PASSWORD) {
@@ -295,7 +297,7 @@ app.delete('/api/admin/products/:id', auth, (req, res) => {
 
 app.get('/api/admin/files', auth, (req, res) => {
   try {
-    const rows = db.prepare('SELECT f.*, p.name as product_name FROM ea_files f LEFT JOIN products p ON f.product_id = p.id ORDER BY f.created_at DESC').all();
+    const rows = db.prepare("SELECT id, original_name, stored_name, size, product_id, is_active, created_at, (SELECT name FROM products WHERE id = ea_files.product_id) as product_name FROM ea_files ORDER BY created_at DESC").all();
     res.json({ files: rows });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });

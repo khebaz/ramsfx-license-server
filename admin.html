@@ -233,7 +233,13 @@ select option{background:var(--dark3)}
         <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
           <i class="ti ti-cloud-upload"></i>
           <p>Drop your compiled .ex5 file here</p>
-          <span>Max 10MB · .ex5 files only</span>
+          <span>Max 50MB · .ex5 files only</span>
+          <div style="margin-top:12px;display:flex;gap:8px;justify-content:center;align-items:center" onclick="event.stopPropagation()">
+            <select id="upload-product-select" style="padding:6px 10px;font-size:12px;border-radius:6px;border:0.5px solid var(--border);background:var(--page-primary);color:var(--text-primary);max-width:200px">
+              <option value="">No product link</option>
+            </select>
+            <button class="btn btn-gold btn-sm" onclick="document.getElementById('file-input').click()"><i class="ti ti-upload"></i> Upload</button>
+          </div>
         </div>
         <div class="tag" style="margin:20px 0 14px">Uploaded files</div>
         <div id="file-list"></div>
@@ -537,6 +543,12 @@ function deleteProduct(id) {
 
 // EA FILES
 function loadFiles() {
+  api('/api/admin/products').then(function (pd) {
+    var sel = $('upload-product-select');
+    if (sel) {
+      sel.innerHTML = '<option value="">No product link</option>' + (pd.products || []).map(function (p) { return '<option value="' + p.id + '">' + p.name + '</option>'; }).join('');
+    }
+  });
   api('/api/admin/files').then(function (d) {
     var list = $('file-list');
     var arr = d.files || [];
@@ -557,9 +569,11 @@ function loadFiles() {
 function handleFileUpload(e) {
   var file = e.target.files[0];
   if (!file) return;
-  if (file.size > 10 * 1024 * 1024) { toast('File too large (max 10MB)', 'danger', 'ti-alert-circle'); return; }
+  if (file.size > 50 * 1024 * 1024) { toast('File too large (max 50MB)', 'danger', 'ti-alert-circle'); return; }
   var fd = new FormData();
   fd.append('file', file);
+  var pid = $('upload-product-select').value;
+  if (pid) fd.append('product_id', pid);
   fetch(API_BASE + '/api/admin/files/upload', {
     method: 'POST',
     headers: { 'Authorization': 'Bearer ' + TOKEN },
