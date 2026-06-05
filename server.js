@@ -12,8 +12,18 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'ramsfx_jwt_secret_change_in_production';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
-const PAYPAL_LINKS = (function () {
-  try { return JSON.parse(process.env.PAYPAL_LINKS || '{}'); } catch { return {}; }
+const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID || '';
+const PAYPAL_BUTTON_IDS = (function () {
+  const raw = process.env.PAYPAL_BUTTON_IDS || process.env.PAYPAL_LINKS || '{}';
+  try {
+    const obj = JSON.parse(raw);
+    const out = {};
+    for (const [k, v] of Object.entries(obj)) {
+      const m = typeof v === 'string' ? v.match(/[A-Z0-9]{10,}/i) : null;
+      out[k] = m ? m[0] : v;
+    }
+    return out;
+  } catch { return {}; }
 })();
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
@@ -128,7 +138,7 @@ function auth(req, res, next) {
 app.get('/api/config', (req, res) => {
   const host = req.get('host') || '';
   const isLocal = host.includes('localhost') || host.includes('127.0.0.1');
-  res.json({ paypal_links: PAYPAL_LINKS, is_local: isLocal });
+  res.json({ paypal_client_id: PAYPAL_CLIENT_ID, hosted_button_ids: PAYPAL_BUTTON_IDS, is_local: isLocal });
 });
 
 app.post('/api/init-paypal-order', (req, res) => {
@@ -137,14 +147,13 @@ app.post('/api/init-paypal-order', (req, res) => {
   try {
     const product = db.prepare('SELECT * FROM products WHERE id = ? AND is_active = 1').get(product_id);
     if (!product) return res.status(404).json({ error: 'Product not found' });
-    const link = PAYPAL_LINKS[String(product_id)];
-    if (!link) return res.status(400).json({ error: 'No payment link configured for this product' });
+    const buttonId = PAYPAL_BUTTON_IDS[String(product_id)];
+    if (!buttonId) return res.status(400).json({ error: 'No payment button configured for this product' });
     const token = uuidv4().slice(0, 8);
-    const expires = Date.now() + 30 * 60 * 1000;
     db.prepare(`INSERT INTO orders (order_number, product_id, customer_email, account_1, account_2, payment_method, amount, paypal_order_id, status, license_id)
-      VALUES (?, ?, ?, ?, ?, 'PayPal Link', ?, ?, 'Pending', NULL)`).run(
+      VALUES (?, ?, ?, ?, ?, 'PayPal', ?, ?, 'Pending', NULL)`).run(
       orderNumber(), product_id, email, account_1, account_2 || null, product.price, token);
-    res.json({ url: link, token });
+    res.json({ button_id: buttonId, token });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -399,7 +408,6 @@ app.listen(PORT, () => {
   console.log(`Admin dashboard: http://localhost:${PORT}/admin`);
   if (ADMIN_PASSWORD) console.log('Admin: configured');
   else console.log('Admin: NOT configured (set ADMIN_PASSWORD env var)');
-  const linkCount = Object.keys(PAYPAL_LINKS).length;
-  if (linkCount > 0) console.log('PayPal links: ' + linkCount + ' configured');
-  else console.log('PayPal links: none configured (set PAYPAL_LINKS env var)');
+  if (PAYPAL_CLIENT_ID) console.log('PayPal Hosted Buttons: configured (' + Object.keys(PAYPAL_BUTTON_IDS).length + ' buttons)');
+  else console.log('PayPal: not configured (set PAYPAL_CLIENT_ID and PAYPAL_BUTTON_IDS)');
 });
